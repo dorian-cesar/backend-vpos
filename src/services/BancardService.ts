@@ -12,6 +12,7 @@ import bancardConfig from '../config/bancard.config';
 import { BancardStagingStrategy } from '../strategies/BancardStagingStrategy';
 import { BancardProductionStrategy } from '../strategies/BancardProductionStrategy';
 import { BancardHttpAdapter } from '../adapters/BancardHttpAdapter';
+import { BancardMockAdapter } from '../adapters/BancardMockAdapter';
 import type {
   BancardCurrency,
   BancardMessage,
@@ -22,6 +23,7 @@ import type {
   RollbackResult,
   SingleBuyParams,
   SingleBuyResult,
+  IBancardAdapter,
 } from '../types/bancard.types';
 
 // ─── Error personalizado ──────────────────────────────────────────────────────
@@ -41,9 +43,17 @@ export class BancardApiError extends Error {
 // ─── Servicio ─────────────────────────────────────────────────────────────────
 
 export class BancardService {
-  public readonly adapter: BancardHttpAdapter;
+  public readonly adapter: IBancardAdapter;
 
   constructor() {
+    const isMock = process.env.USE_MOCK_BANCARD === 'true';
+
+    if (isMock) {
+      this.adapter = new BancardMockAdapter();
+      console.log(`[BancardService] Entorno: MOCK (Simulador local)`);
+      return;
+    }
+
     // ─── Strategy: selección automática por entorno ─────────────────────────
     const isProduction = process.env.NODE_ENV === 'production';
     const strategy = isProduction

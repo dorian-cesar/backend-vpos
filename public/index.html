@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bancard vPOS Checkout</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Bancard Staging JS Library -->
+  <script src="https://vpos.infonet.com.py:8888/checkout/javascript/dist/bancard-checkout-4.0.0.js"></script>
+</head>
+
+<body>
+
+  <main class="app-container">
+
+    <div class="checkout-card">
+      <div class="product-info" id="product-info">
+        <div class="product-badge">Bancard</div>
+        <h1>Mock de prueba Bancard</h1>
+        <p class="description">Pagar boleto.</p>
+
+        <div class="price-row">
+          <span class="price-label">Total a pagar:</span>
+          <span class="price-amount">Gs. 15.000</span>
+        </div>
+
+        <button id="pay-button" class="btn-primary">
+          <span class="btn-text">Pagar con Bancard</span>
+          <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Spinner de Carga -->
+      <div id="loader" class="loader hidden">
+        <div class="spinner"></div>
+        <p>Conectando con Bancard...</p>
+      </div>
+
+      <!-- Iframe de Bancard se inyectará aquí -->
+      <div id="iframe-container" class="hidden"></div>
+
+      <!-- Mensaje de Éxito -->
+      <div id="success-message" class="success-message hidden">
+        <div class="success-icon">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+        </div>
+        <h2>¡Pago Exitoso!</h2>
+        <p>Gracias por tu compra.</p>
+        <button class="btn-secondary" onclick="window.location.reload()">Volver al inicio</button>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+
+</html>

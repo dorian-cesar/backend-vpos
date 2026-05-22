@@ -74,6 +74,17 @@ export interface BancardConfirmation {
   [key: string]: unknown;
 }
 
+// ─── Interfaces de Adaptadores ──────────────────────────────────────────────
+
+export interface IBancardAdapter {
+  singleBuy(params: SingleBuyParams): Promise<BancardRawResponse>;
+  rollback(params: RollbackParams): Promise<BancardRawResponse>;
+  getConfirmation(params: GetConfirmationParams): Promise<BancardRawResponse>;
+  chargeBack(params: ChargeBackParams): Promise<BancardRawResponse>;
+  getIframeUrl(processId: string): string;
+  getEnvironment(): string;
+}
+
 // ─── Respuestas del servicio (alto nivel) ─────────────────────────────────
 
 export interface SingleBuyResult {

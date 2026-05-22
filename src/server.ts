@@ -9,6 +9,7 @@
 
 import 'dotenv/config';
 import express from 'express';
+import path from 'path';
 import cors from 'cors';
 import morgan from 'morgan';
 import bancardRoutes from './routes/bancard.routes';
@@ -29,6 +30,9 @@ app.use(
 );
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// Servir frontend estático
+app.use(express.static(path.join(__dirname, '../public')));
 
 if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));

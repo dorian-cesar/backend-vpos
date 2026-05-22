@@ -25,9 +25,10 @@ import type {
   GetConfirmationParams,
   RollbackParams,
   SingleBuyParams,
+  IBancardAdapter,
 } from '../types/bancard.types';
 
-export class BancardHttpAdapter {
+export class BancardHttpAdapter implements IBancardAdapter {
   private readonly strategy: BancardStrategy;
   private readonly httpClient: AxiosInstance;
 

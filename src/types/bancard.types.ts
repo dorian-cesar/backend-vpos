@@ -148,6 +148,12 @@ export interface SingleBuyRequest {
   cancelUrl?: string;
 }
 
+export interface PagoSimpleRequest extends SingleBuyRequest {
+  servicio?: string;
+  canal?: string;
+  id?: string;
+}
+
 export interface RollbackRequest {
   shopProcessId: number;
 }

@@ -7,6 +7,7 @@ import { Router } from 'express';
 import { body, param } from 'express-validator';
 import {
   initiateSingleBuy,
+  initiatePagoSimple,
   rollback,
   getConfirmation,
   chargeBack,
@@ -38,6 +39,21 @@ const currencyValidation = () =>
     .optional()
     .isIn(['PYG', 'USD']).withMessage('currency debe ser PYG o USD.');
 
+const servicioValidation = () =>
+  body('servicio')
+    .optional()
+    .isString().withMessage('servicio debe ser un texto.');
+
+const canalValidation = () =>
+  body('canal')
+    .optional()
+    .isString().withMessage('canal debe ser un texto.');
+
+const idValidation = () =>
+  body('id')
+    .optional()
+    .isString().withMessage('id debe ser un texto.');
+
 // ─── Rutas ───────────────────────────────────────────────────────────────────
 
 /** GET /api/bancard/health — Health check */
@@ -61,6 +77,29 @@ router.post(
     body('cancelUrl').optional().isURL().withMessage('cancelUrl debe ser una URL válida.'),
   ],
   initiateSingleBuy,
+);
+
+/**
+ * POST /api/bancard/pagosimple
+ * Alias para iniciar una compra simple (solicitado para integración con frontends externos)
+ */
+router.post(
+  '/pagosimple',
+  [
+    shopProcessIdBodyValidation(),
+    amountValidation(),
+    currencyValidation(),
+    servicioValidation(),
+    canalValidation(),
+    idValidation(),
+    body('description')
+      .notEmpty().withMessage('description es requerida.')
+      .isLength({ max: 50 }).withMessage('description no puede superar 50 caracteres.'),
+    body('additionalData').optional().isString(),
+    body('returnUrl').optional().isURL().withMessage('returnUrl debe ser una URL válida.'),
+    body('cancelUrl').optional().isURL().withMessage('cancelUrl debe ser una URL válida.'),
+  ],
+  initiatePagoSimple,
 );
 
 /**

@@ -38,6 +38,9 @@ export class BancardHttpAdapter implements IBancardAdapter {
     this.httpClient = axios.create({
       timeout: bancardConfig.httpTimeout,
       headers: strategy.getHeaders(),
+      // Evitar que Axios lance una excepción con códigos HTTP 4xx o 5xx,
+      // para poder capturar los errores de negocio de Bancard en el body.
+      validateStatus: (status) => status < 500,
       // En staging ignoramos errores SSL (certificados autofirmados de Bancard)
       ...(strategy.getEnvironmentName() === 'staging' && {
         httpsAgent: new https.Agent({ rejectUnauthorized: false }),
@@ -93,7 +96,8 @@ export class BancardHttpAdapter implements IBancardAdapter {
 
     const privateKey = this.strategy.getPrivateKey();
     const publicKey = this.strategy.getPublicKey();
-    const token = generateSingleBuyToken(privateKey, shopProcessId, amount, currency as BancardCurrency);
+    const formattedAmount = Number(amount).toFixed(2);
+    const token = generateSingleBuyToken(privateKey, shopProcessId, formattedAmount, currency as BancardCurrency);
 
     const url = this.strategy.buildEndpointUrl(bancardConfig.apiPaths.singleBuy);
 
@@ -103,7 +107,7 @@ export class BancardHttpAdapter implements IBancardAdapter {
         token,
         shop_process_id: shopProcessId,
         currency,
-        amount: String(amount),
+        amount: formattedAmount,
         additional_data: additionalData ?? '',
         description: description.substring(0, 50),
         return_url: returnUrl ?? bancardConfig.returnUrl,
@@ -181,7 +185,8 @@ export class BancardHttpAdapter implements IBancardAdapter {
 
     const privateKey = this.strategy.getPrivateKey();
     const publicKey = this.strategy.getPublicKey();
-    const token = generateChargeBackToken(privateKey, shopProcessId, amount, currency as BancardCurrency);
+    const formattedAmount = Number(amount).toFixed(2);
+    const token = generateChargeBackToken(privateKey, shopProcessId, formattedAmount, currency as BancardCurrency);
 
     const url = this.strategy.buildEndpointUrl(bancardConfig.apiPaths.chargeBack);
 
@@ -190,7 +195,7 @@ export class BancardHttpAdapter implements IBancardAdapter {
       operation: {
         token,
         shop_process_id: shopProcessId,
-        amount: String(amount),
+        amount: formattedAmount,
         currency,
       },
     };

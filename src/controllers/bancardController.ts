@@ -14,7 +14,9 @@ import type {
   ChargeBackRequest,
   RollbackRequest,
   SingleBuyRequest,
+  PagoSimpleRequest,
 } from '../types/bancard.types';
+import { PagoSimpleAudit } from '../models/PagoSimpleAudit';
 
 // Singleton del servicio
 const bancardService = new BancardService();
@@ -84,6 +86,79 @@ export const initiateSingleBuy = async (
       ...(process.env.NODE_ENV !== 'production' && { detail: message }),
     };
     res.status(500).json(body);
+  }
+};
+
+// ─── 1.B POST /api/bancard/pagosimple ───────────────────────────────────────
+
+export const initiatePagoSimple = async (
+  req: Request<ParamsDictionary, unknown, PagoSimpleRequest>,
+  res: Response,
+): Promise<void> => {
+  if (!checkValidation(req, res)) return;
+
+  try {
+    const { shopProcessId, amount, currency, description, additionalData, returnUrl, cancelUrl, servicio, canal, id } = req.body;
+
+    const result = await bancardService.initiateSingleBuy({
+      shopProcessId,
+      amount,
+      currency,
+      description,
+      additionalData,
+      returnUrl,
+      cancelUrl,
+    });
+
+    // Guardar auditoría exitosa
+    await PagoSimpleAudit.saveAuditLog({
+      externalId: id,
+      servicio,
+      canal,
+      shopProcessId,
+      amount,
+      requestPayload: req.body,
+      bancardResponse: result.rawResponse
+    });
+
+    const body: ApiSuccessResponse<typeof result> = {
+      status: 'success',
+      message: 'Compra iniciada exitosamente.',
+      data: result,
+    };
+    res.status(200).json(body);
+  } catch (error) {
+    let errorResponse: any;
+    let statusCode = 500;
+
+    if (error instanceof BancardApiError) {
+      errorResponse = {
+        status: 'error',
+        message: error.message,
+        bancardMessages: error.bancardMessages,
+      };
+      statusCode = 400;
+    } else {
+      const message = error instanceof Error ? error.message : 'Error desconocido';
+      errorResponse = {
+        status: 'error',
+        message: 'Error interno del servidor al comunicarse con Bancard.',
+        ...(process.env.NODE_ENV !== 'production' && { detail: message }),
+      };
+    }
+
+    // Guardar auditoría fallida
+    await PagoSimpleAudit.saveAuditLog({
+      externalId: req.body.id,
+      servicio: req.body.servicio,
+      canal: req.body.canal,
+      shopProcessId: req.body.shopProcessId,
+      amount: req.body.amount,
+      requestPayload: req.body,
+      bancardResponse: errorResponse
+    });
+
+    res.status(statusCode).json(errorResponse);
   }
 };
 

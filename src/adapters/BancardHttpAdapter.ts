@@ -211,6 +211,11 @@ export class BancardHttpAdapter implements IBancardAdapter {
     return this.strategy.getIframeUrl(processId);
   }
 
+  /** Retorna la URL del SDK de Bancard. */
+  getSdkUrl(): string {
+    return this.strategy.getSdkUrl();
+  }
+
   /** Retorna el nombre del entorno activo. */
   getEnvironment(): string {
     return this.strategy.getEnvironmentName();

@@ -108,6 +108,7 @@ export class BancardService {
     return {
       processId,
       iframeUrl: this.adapter.getIframeUrl(processId),
+      sdkUrl: this.adapter.getSdkUrl(),
       status,
       environment: this.adapter.getEnvironment() as 'staging' | 'production',
       rawResponse: bancardResponse,

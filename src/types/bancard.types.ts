@@ -82,6 +82,7 @@ export interface IBancardAdapter {
   getConfirmation(params: GetConfirmationParams): Promise<BancardRawResponse>;
   chargeBack(params: ChargeBackParams): Promise<BancardRawResponse>;
   getIframeUrl(processId: string): string;
+  getSdkUrl(): string;
   getEnvironment(): string;
 }
 
@@ -90,6 +91,7 @@ export interface IBancardAdapter {
 export interface SingleBuyResult {
   processId: string;
   iframeUrl: string;
+  sdkUrl: string;
   status: string;
   environment: BancardEnvironmentName;
   rawResponse: BancardRawResponse;

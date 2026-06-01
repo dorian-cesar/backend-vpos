@@ -117,8 +117,10 @@ router.post(
  *                 type: string
  *               servicio:
  *                 type: string
+ *                 example: "boletos/custodia"
  *               canal:
  *                 type: string
+ *                 example: "totem/web/puntodeventa"
  *               id:
  *                 type: string
  *     responses:

@@ -1,0 +1,220 @@
+{
+  "info": {
+    "_postman_id": "8a7b9c6d-5e4f-3a2b-1c0d-9e8f7a6b5c4d",
+    "name": "Bancard vPOS Backend API",
+    "description": "Colección completa para interactuar y probar el backend vPOS de Bancard.\n\n### Auditoría en Base de Datos\nCada vez que llamas a `/api/pagosimple`, el sistema guarda un registro en la tabla `pago_simple_audits` en tu base de datos MySQL (con AWS RDS). \n\n**Queries útiles para probar la base de datos:**\n```sql\n-- Ver los últimos pagos registrados:\nSELECT * FROM pago_simple_audits ORDER BY id DESC LIMIT 10;\n\n-- Buscar pagos de un servicio específico:\nSELECT * FROM pago_simple_audits WHERE servicio = 'Totem Venta';\n\n-- Buscar por el process ID:\nSELECT * FROM pago_simple_audits WHERE shop_process_id = '10001';\n```",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/bancard/health",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "bancard",
+            "health"
+          ]
+        },
+        "description": "Verifica si el backend está activo y en qué entorno de Bancard está configurado."
+      },
+      "response": []
+    },
+    {
+      "name": "1. Iniciar Pago Simple Personalizado (pagosimple)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"shopProcessId\": {{$randomInt}},\n    \"amount\": 15000,\n    \"currency\": \"PYG\",\n    \"description\": \"Pago de Prueba desde Postman\",\n    \"servicio\": \"Prueba Postman\",\n    \"canal\": \"API Directa\",\n    \"id\": \"TEST-001\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/pagosimple",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "pagosimple"
+          ]
+        },
+        "description": "Inicia la compra y guarda la auditoría en la base de datos MySQL."
+      },
+      "response": []
+    },
+    {
+      "name": "1.b Iniciar Compra Simple (Bancard Puro)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"shopProcessId\": {{$randomInt}},\n    \"amount\": 25000,\n    \"currency\": \"PYG\",\n    \"description\": \"Compra Simple Pura\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/bancard/single-buy",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "bancard",
+            "single-buy"
+          ]
+        },
+        "description": "Inicia una compra usando el flujo oficial puro (sin guardado en base de datos)."
+      },
+      "response": []
+    },
+    {
+      "name": "2. Consultar Estado (Confirmation)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/bancard/confirmation/10001",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "bancard",
+            "confirmation",
+            "10001"
+          ]
+        },
+        "description": "Consulta el estado de una transacción. Reemplaza el 10001 con el shopProcessId que deseas consultar."
+      },
+      "response": []
+    },
+    {
+      "name": "3. Revertir Pago (Rollback)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"shopProcessId\": 10001\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/bancard/rollback",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "bancard",
+            "rollback"
+          ]
+        },
+        "description": "Revierte un pago no confirmado."
+      },
+      "response": []
+    },
+    {
+      "name": "4. Reembolso (Charge Back)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"shopProcessId\": 10001,\n    \"amount\": 15000,\n    \"currency\": \"PYG\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/bancard/charge-back",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "bancard",
+            "charge-back"
+          ]
+        },
+        "description": "Devuelve/reembolsa el dinero de una transacción que ya fue aprobada."
+      },
+      "response": []
+    },
+    {
+      "name": "5. Simular Webhook Bancard (Confirm)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"operation\": {\n        \"shop_process_id\": 10001,\n        \"response_code\": \"00\",\n        \"response_description\": \"Aprobado\",\n        \"amount\": 15000,\n        \"currency\": \"PYG\",\n        \"ticket_number\": \"123456\",\n        \"authorization_number\": \"654321\"\n    }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/bancard/confirm",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "bancard",
+            "confirm"
+          ]
+        },
+        "description": "Simula ser los servidores de Bancard enviándote una notificación asíncrona de pago exitoso a tu webhook."
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://wit-bancard.dev-wit.com/api",
+      "type": "string"
+    }
+  ]
+}

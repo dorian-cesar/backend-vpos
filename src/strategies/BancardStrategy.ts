@@ -20,6 +20,8 @@ export abstract class BancardStrategy {
   /** Retorna la URL base de la API de Bancard para este entorno. */
   abstract getBaseUrl(): string;
 
+
+
   /** Retorna el nombre del entorno activo: 'staging' | 'production'. */
   abstract getEnvironmentName(): BancardEnvironmentName;
 
@@ -58,5 +60,12 @@ export abstract class BancardStrategy {
    */
   getIframeUrl(processId: string): string {
     return `${this.getBaseUrl()}/payment/card/new_hp?process_id=${processId}`;
+  }
+
+  /**
+   * Retorna la URL del SDK Javascript de Bancard para el frontend.
+   */
+  getSdkUrl(): string {
+    return `${this.getBaseUrl()}/checkout/javascript/dist/bancard-checkout-4.0.0.js`;
   }
 }

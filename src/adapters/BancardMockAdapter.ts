@@ -96,6 +96,10 @@ export class BancardMockAdapter implements IBancardAdapter {
     return `${bancardConfig.environments.staging.baseUrl}/payment/card/new_hp?process_id=${processId}`;
   }
 
+  getSdkUrl(): string {
+    return `${bancardConfig.environments.staging.baseUrl}/checkout/javascript/dist/bancard-checkout-4.0.0.js`;
+  }
+
   getEnvironment(): string {
     return 'mock';
   }

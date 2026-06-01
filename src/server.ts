@@ -14,8 +14,6 @@ import morgan from 'morgan';
 import bancardRoutes from './routes/bancard.routes';
 import errorHandler from './middleware/errorHandler';
 import requestLogger from './middleware/requestLogger';
-import { checkDbConnection } from './config/db.config';
-import { PagoSimpleAudit } from './models/PagoSimpleAudit';
 
 const app = express();
 const PORT = Number(process.env.PORT ?? 3000);
@@ -31,6 +29,7 @@ app.use(
 );
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
 
 if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
@@ -65,16 +64,10 @@ app.use(errorHandler);
 
 // ─── Inicio del servidor ───────────────────────────────────────────────────
 
-app.listen(PORT, async () => {
+app.listen(PORT, () => {
   console.log('\n╔════════════════════════════════════════════╗');
   console.log('║   🏦  Bancard vPOS Backend (TypeScript)    ║');
   console.log('╚════════════════════════════════════════════╝');
-  
-  const dbOk = await checkDbConnection();
-  if (dbOk) {
-    await PagoSimpleAudit.initTable();
-  }
-
   console.log(`\n🚀 Servidor en http://localhost:${PORT}`);
   console.log(`📦 Entorno: ${(process.env.NODE_ENV ?? 'staging').toUpperCase()}`);
   console.log('\n📋 Endpoints:');

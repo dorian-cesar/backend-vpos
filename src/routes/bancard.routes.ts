@@ -16,6 +16,7 @@ import {
 } from '../controllers/bancardController';
 
 const router = Router();
+export const pagoSimpleRouter = Router();
 
 // ─── Validaciones reutilizables ──────────────────────────────────────────────
 
@@ -80,10 +81,10 @@ router.post(
 );
 
 /**
- * POST /api/bancard/pagosimple
- * Alias para iniciar una compra simple (solicitado para integración con frontends externos)
+ * POST /api/pagosimple
+ * Iniciar compra simple a través de nuestra interfaz
  */
-router.post(
+pagoSimpleRouter.post(
   '/pagosimple',
   [
     shopProcessIdBodyValidation(),
@@ -101,7 +102,6 @@ router.post(
   ],
   initiatePagoSimple,
 );
-
 /**
  * POST /api/bancard/rollback
  * Revierte una transacción no confirmada

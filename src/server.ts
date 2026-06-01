@@ -11,7 +11,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
-import bancardRoutes from './routes/bancard.routes';
+import bancardRoutes, { pagoSimpleRouter } from './routes/bancard.routes';
 import errorHandler from './middleware/errorHandler';
 import requestLogger from './middleware/requestLogger';
 
@@ -50,6 +50,7 @@ app.get('/', (_req, res) => {
 });
 
 app.use('/api/bancard', bancardRoutes);
+app.use('/api', pagoSimpleRouter);
 
 // 404
 app.use((req, res) => {
@@ -65,19 +66,23 @@ app.use(errorHandler);
 // ─── Inicio del servidor ───────────────────────────────────────────────────
 
 app.listen(PORT, () => {
+  const baseUrl = process.env.APP_BASE_URL ?? `http://localhost:${PORT}`;
+
   console.log('\n╔════════════════════════════════════════════╗');
   console.log('║   🏦  Bancard vPOS Backend (TypeScript)    ║');
   console.log('╚════════════════════════════════════════════╝');
-  console.log(`\n🚀 Servidor en http://localhost:${PORT}`);
-  console.log(`📦 Entorno: ${(process.env.NODE_ENV ?? 'staging').toUpperCase()}`);
+  console.log(`\n🚀 Servidor escuchando en el puerto: ${PORT}`);
+  console.log(`🔗 URL Base del API: ${baseUrl}`);
+  console.log(`📦 Entorno Bancard: ${(process.env.BANCARD_ENVIRONMENT ?? 'staging').toUpperCase()}`);
   console.log('\n📋 Endpoints:');
-  console.log(`   GET  http://localhost:${PORT}/api/bancard/health`);
-  console.log(`   POST http://localhost:${PORT}/api/bancard/single-buy`);
-  console.log(`   POST http://localhost:${PORT}/api/bancard/rollback`);
-  console.log(`   GET  http://localhost:${PORT}/api/bancard/confirmation/:shopProcessId`);
-  console.log(`   POST http://localhost:${PORT}/api/bancard/charge-back`);
-  console.log(`   POST http://localhost:${PORT}/api/bancard/confirm  ← webhook Bancard`);
-  console.log('\n⚙️  Configura .env con tus credenciales de Bancard.\n');
+  console.log(`   GET  ${baseUrl}/api/bancard/health`);
+  console.log(`   POST ${baseUrl}/api/pagosimple`);
+  console.log(`   POST ${baseUrl}/api/bancard/single-buy`);
+  console.log(`   POST ${baseUrl}/api/bancard/rollback`);
+  console.log(`   GET  ${baseUrl}/api/bancard/confirmation/:shopProcessId`);
+  console.log(`   POST ${baseUrl}/api/bancard/charge-back`);
+  console.log(`   POST ${baseUrl}/api/bancard/confirm  ← Webhook`);
+  console.log('\n⚙️  Revisa tu .env para confirmar configuraciones.\n');
 });
 
 export default app;

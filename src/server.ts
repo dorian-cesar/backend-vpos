@@ -14,6 +14,8 @@ import morgan from 'morgan';
 import bancardRoutes, { pagoSimpleRouter } from './routes/bancard.routes.js';
 import errorHandler from './middleware/errorHandler.js';
 import requestLogger from './middleware/requestLogger.js';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger.config.js';
 
 const app = express();
 const PORT = Number(process.env.PORT ?? 3000);
@@ -52,6 +54,11 @@ app.get('/', (_req, res) => {
 app.use('/api/bancard', bancardRoutes);
 app.use('/api', pagoSimpleRouter);
 
+// Swagger
+if (process.env.SWAGGER_VISIBLE === 'true') {
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+}
+
 // 404
 app.use((req, res) => {
   res.status(404).json({
@@ -82,6 +89,9 @@ app.listen(PORT, () => {
   console.log(`   GET  ${baseUrl}/api/bancard/confirmation/:shopProcessId`);
   console.log(`   POST ${baseUrl}/api/bancard/charge-back`);
   console.log(`   POST ${baseUrl}/api/bancard/confirm  ← Webhook`);
+  if (process.env.SWAGGER_VISIBLE === 'true') {
+    console.log(`   📚   ${baseUrl}/api-docs  ← Swagger UI`);
+  }
   console.log('\n⚙️  Revisa tu .env para confirmar configuraciones.\n');
 });
 

@@ -28,7 +28,9 @@
     "express-validator": "^7.1.0",
     "md5": "^2.3.0",
     "morgan": "^1.10.0",
-    "mysql2": "^3.22.4"
+    "mysql2": "^3.22.4",
+    "swagger-jsdoc": "^6.3.0",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
@@ -36,6 +38,8 @@
     "@types/md5": "^2.3.5",
     "@types/morgan": "^1.9.9",
     "@types/node": "^20.14.2",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "rimraf": "^5.0.7",
     "ts-node-dev": "^2.0.0",
     "tsx": "^4.22.4",

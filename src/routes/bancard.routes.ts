@@ -57,7 +57,16 @@ const idValidation = () =>
 
 // ─── Rutas ───────────────────────────────────────────────────────────────────
 
-/** GET /api/bancard/health — Health check */
+/**
+ * @swagger
+ * /api/bancard/health:
+ *   get:
+ *     summary: Verifica que el backend esté respondiendo
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: El backend está activo
+ */
 router.get('/health', healthCheck);
 
 /**
@@ -81,8 +90,40 @@ router.post(
 );
 
 /**
- * POST /api/pagosimple
- * Iniciar compra simple a través de nuestra interfaz
+ * @swagger
+ * /api/pagosimple:
+ *   post:
+ *     summary: Iniciar una compra simple y registrar auditoría
+ *     tags: [Pagos]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - shopProcessId
+ *               - amount
+ *               - description
+ *             properties:
+ *               shopProcessId:
+ *                 type: integer
+ *               amount:
+ *                 type: number
+ *               currency:
+ *                 type: string
+ *                 enum: [PYG, USD]
+ *               description:
+ *                 type: string
+ *               servicio:
+ *                 type: string
+ *               canal:
+ *                 type: string
+ *               id:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Pago iniciado correctamente, retorna iframeUrl
  */
 pagoSimpleRouter.post(
   '/pagosimple',

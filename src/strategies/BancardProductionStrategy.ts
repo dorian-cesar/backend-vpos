@@ -9,9 +9,9 @@
  *    deben estar correctamente configuradas antes de usar esta estrategia.
  */
 
-import { BancardStrategy } from './BancardStrategy';
-import type { BancardConfig } from '../config/bancard.config';
-import type { BancardEnvironmentName } from '../types/bancard.types';
+import { BancardStrategy } from './BancardStrategy.js';
+import type { BancardConfig } from '../config/bancard.config.js';
+import type { BancardEnvironmentName } from '../types/bancard.types.js';
 
 export class BancardProductionStrategy extends BancardStrategy {
   private readonly _baseUrl: string;

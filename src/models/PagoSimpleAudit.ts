@@ -1,4 +1,4 @@
-import { dbPool } from '../config/db.config';
+import { dbPool } from '../config/db.config.js';
 
 export class PagoSimpleAudit {
   

@@ -11,9 +11,9 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
-import bancardRoutes, { pagoSimpleRouter } from './routes/bancard.routes';
-import errorHandler from './middleware/errorHandler';
-import requestLogger from './middleware/requestLogger';
+import bancardRoutes, { pagoSimpleRouter } from './routes/bancard.routes.js';
+import errorHandler from './middleware/errorHandler.js';
+import requestLogger from './middleware/requestLogger.js';
 
 const app = express();
 const PORT = Number(process.env.PORT ?? 3000);

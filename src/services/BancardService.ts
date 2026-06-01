@@ -8,11 +8,11 @@
  * 3. Expone métodos de negocio tipados a los controladores
  */
 
-import bancardConfig from '../config/bancard.config';
-import { BancardStagingStrategy } from '../strategies/BancardStagingStrategy';
-import { BancardProductionStrategy } from '../strategies/BancardProductionStrategy';
-import { BancardHttpAdapter } from '../adapters/BancardHttpAdapter';
-import { BancardMockAdapter } from '../adapters/BancardMockAdapter';
+import bancardConfig from '../config/bancard.config.js';
+import { BancardStagingStrategy } from '../strategies/BancardStagingStrategy.js';
+import { BancardProductionStrategy } from '../strategies/BancardProductionStrategy.js';
+import { BancardHttpAdapter } from '../adapters/BancardHttpAdapter.js';
+import { BancardMockAdapter } from '../adapters/BancardMockAdapter.js';
 import type {
   BancardCurrency,
   BancardMessage,
@@ -24,7 +24,7 @@ import type {
   SingleBuyParams,
   SingleBuyResult,
   IBancardAdapter,
-} from '../types/bancard.types';
+} from '../types/bancard.types.js';
 
 // ─── Error personalizado ──────────────────────────────────────────────────────
 

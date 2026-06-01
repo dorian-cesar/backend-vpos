@@ -7,8 +7,8 @@
  * (staging vs producción) del código de negocio en BancardService.
  */
 
-import type { BancardConfig } from '../config/bancard.config';
-import type { BancardEnvironmentName } from '../types/bancard.types';
+import type { BancardConfig } from '../config/bancard.config.js';
+import type { BancardEnvironmentName } from '../types/bancard.types.js';
 
 export abstract class BancardStrategy {
   protected readonly config: BancardConfig;

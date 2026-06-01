@@ -9,8 +9,8 @@
  *   charge_back:         md5(private_key + shop_process_id + "charge_back" + amount + currency)
  */
 
-import md5 = require('md5');
-import type { BancardCurrency } from '../types/bancard.types';
+import md5 from 'md5';
+import type { BancardCurrency } from '../types/bancard.types.js';
 
 /**
  * Genera el token de seguridad para `single_buy`.

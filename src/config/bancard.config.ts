@@ -3,7 +3,7 @@
  * Configuración centralizada para la integración con Bancard vPOS.
  */
 
-import type { BancardCurrency, BancardEnvironment, BancardEnvironmentName } from '../types/bancard.types';
+import type { BancardCurrency, BancardEnvironment, BancardEnvironmentName } from '../types/bancard.types.js';
 
 // ─── Tipo interno del config (con getters) ────────────────────────────────
 

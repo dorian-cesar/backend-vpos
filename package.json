@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "description": "Backend TypeScript para integración con vPOS de Bancard - eCommerce Compra Simple",
   "main": "dist/server.js",
+  "type": "module",
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "dev": "tsx watch src/server.ts",
     "typecheck": "tsc --noEmit",
     "clean": "rimraf dist"
   },
@@ -37,6 +38,7 @@
     "@types/node": "^20.14.2",
     "rimraf": "^5.0.7",
     "ts-node-dev": "^2.0.0",
+    "tsx": "^4.22.4",
     "typescript": "^5.4.5"
   }
 }

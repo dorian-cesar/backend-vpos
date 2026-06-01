@@ -13,7 +13,7 @@ import {
   chargeBack,
   confirmWebhook,
   healthCheck,
-} from '../controllers/bancardController';
+} from '../controllers/bancardController.js';
 
 const router = Router();
 export const pagoSimpleRouter = Router();

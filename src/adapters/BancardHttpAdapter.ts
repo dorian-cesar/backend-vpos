@@ -10,14 +10,14 @@
 
 import axios, { type AxiosInstance, type InternalAxiosRequestConfig, type AxiosResponse } from 'axios';
 import * as https from 'https';
-import bancardConfig from '../config/bancard.config';
+import bancardConfig from '../config/bancard.config.js';
 import {
   generateSingleBuyToken,
   generateRollbackToken,
   generateGetConfirmationToken,
   generateChargeBackToken,
-} from '../utils/tokenGenerator';
-import { BancardStrategy } from '../strategies/BancardStrategy';
+} from '../utils/tokenGenerator.js';
+import { BancardStrategy } from '../strategies/BancardStrategy.js';
 import type {
   BancardCurrency,
   BancardRawResponse,
@@ -26,7 +26,7 @@ import type {
   RollbackParams,
   SingleBuyParams,
   IBancardAdapter,
-} from '../types/bancard.types';
+} from '../types/bancard.types.js';
 
 export class BancardHttpAdapter implements IBancardAdapter {
   private readonly strategy: BancardStrategy;

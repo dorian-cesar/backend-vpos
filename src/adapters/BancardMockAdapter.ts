@@ -14,8 +14,8 @@ import type {
   RollbackParams,
   SingleBuyParams,
   IBancardAdapter,
-} from '../types/bancard.types';
-import bancardConfig from '../config/bancard.config';
+} from '../types/bancard.types.js';
+import bancardConfig from '../config/bancard.config.js';
 
 export class BancardMockAdapter implements IBancardAdapter {
   // ─── Helpers privados ─────────────────────────────────────────────────────

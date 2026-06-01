@@ -6,7 +6,7 @@
 import type { Request, Response } from 'express';
 import type { ParamsDictionary } from 'express-serve-static-core';
 import { validationResult } from 'express-validator';
-import { BancardService, BancardApiError } from '../services/BancardService';
+import { BancardService, BancardApiError } from '../services/BancardService.js';
 import type {
   ApiErrorResponse,
   ApiSuccessResponse,
@@ -15,8 +15,8 @@ import type {
   RollbackRequest,
   SingleBuyRequest,
   PagoSimpleRequest,
-} from '../types/bancard.types';
-import { PagoSimpleAudit } from '../models/PagoSimpleAudit';
+} from '../types/bancard.types.js';
+import { PagoSimpleAudit } from '../models/PagoSimpleAudit.js';
 
 // Singleton del servicio
 const bancardService = new BancardService();

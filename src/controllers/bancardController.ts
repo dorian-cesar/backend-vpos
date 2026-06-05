@@ -280,25 +280,15 @@ export const pagoSimpleGateway = async (
       statusCode = 500;
     }
 
-    // ─── Guardar auditoría del error en tabla dedicada de error logs ──────
-    await PagoSimpleAudit.saveErrorLog({
-      action,
-      shopProcessId: req.body.shopProcessId,
-      servicio,
-      canal,
-      errorCode: statusCode,
-      errorMessage: error instanceof Error ? error.message : 'Error desconocido',
-      errorDetail: error instanceof Error && process.env.NODE_ENV !== 'production' ? error.stack : undefined,
-      bancardMessages,
-      requestPayload: req.body,
-      ipAddress,
-    });
-
-    // ─── También guardar en auditoría principal para tener historial completo ─
+    // ─── Guardar auditoría unificada con detalles del error ──────
     await PagoSimpleAudit.saveAuditLog({
       ...auditBase,
       statusResult: 'error',
       bancardResponse: errorResponse,
+      errorCode: statusCode,
+      errorMessage: error instanceof Error ? error.message : 'Error desconocido',
+      errorDetail: error instanceof Error && process.env.NODE_ENV !== 'production' ? error.stack : undefined,
+      bancardMessages,
     });
 
     res.status(statusCode).json(errorResponse);

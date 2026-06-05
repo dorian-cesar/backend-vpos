@@ -100,18 +100,23 @@ export const pagoSimpleGateway = async (
   if (!checkValidation(req, res)) return;
 
   const { action, servicio, canal, id } = req.body;
+  const ipAddress = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket.remoteAddress || undefined;
   let result: unknown = null;
   let statusCode = 200;
   let responseBody: unknown = null;
 
-  // ─── Auditoría base (se guarda siempre) ──────────────────────────────────
+  // ─── Auditoría base (campos comunes a todas las acciones) ───────────────
   const auditBase = {
+    action,
     externalId: id,
     servicio,
     canal,
     shopProcessId: req.body.shopProcessId ?? 0,
-    amount: req.body.amount ?? 0,
+    amount: req.body.amount ?? undefined,
+    currency: req.body.currency ?? undefined,
+    description: req.body.description ?? undefined,
     requestPayload: req.body,
+    ipAddress,
   };
 
   try {
@@ -238,9 +243,12 @@ export const pagoSimpleGateway = async (
       }
     }
 
-    // ─── Auditoría exitosa ────────────────────────────────────────────────
+    // ─── Auditoría exitosa — incluye processId de Bancard si viene en result ─
+    const typedResult = result as Record<string, unknown> | null;
     await PagoSimpleAudit.saveAuditLog({
       ...auditBase,
+      bancardProcessId: typedResult?.processId as string | undefined,
+      statusResult: typedResult?.status as string | undefined ?? 'success',
       bancardResponse: result,
     });
 
@@ -249,13 +257,15 @@ export const pagoSimpleGateway = async (
   } catch (error) {
     // ─── Manejo centralizado de errores ──────────────────────────────────
     let errorResponse: unknown;
+    let bancardMessages: unknown;
 
     if (error instanceof BancardApiError) {
+      bancardMessages = error.bancardMessages;
       errorResponse = {
         status: 'error',
         action,
         message: error.message,
-        bancardMessages: error.bancardMessages,
+        bancardMessages,
       };
       statusCode = 400;
     } else {
@@ -270,9 +280,24 @@ export const pagoSimpleGateway = async (
       statusCode = 500;
     }
 
-    // ─── Auditoría fallida ────────────────────────────────────────────────
+    // ─── Guardar auditoría del error en tabla dedicada de error logs ──────
+    await PagoSimpleAudit.saveErrorLog({
+      action,
+      shopProcessId: req.body.shopProcessId,
+      servicio,
+      canal,
+      errorCode: statusCode,
+      errorMessage: error instanceof Error ? error.message : 'Error desconocido',
+      errorDetail: error instanceof Error && process.env.NODE_ENV !== 'production' ? error.stack : undefined,
+      bancardMessages,
+      requestPayload: req.body,
+      ipAddress,
+    });
+
+    // ─── También guardar en auditoría principal para tener historial completo ─
     await PagoSimpleAudit.saveAuditLog({
       ...auditBase,
+      statusResult: 'error',
       bancardResponse: errorResponse,
     });
 

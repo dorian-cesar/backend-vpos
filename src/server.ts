@@ -16,6 +16,8 @@ import errorHandler from './middleware/errorHandler.js';
 import requestLogger from './middleware/requestLogger.js';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger.config.js';
+import { checkDbConnection } from './config/db.config.js';
+import { PagoSimpleAudit } from './models/PagoSimpleAudit.js';
 
 const app = express();
 const PORT = Number(process.env.PORT ?? 3000);
@@ -72,7 +74,7 @@ app.use(errorHandler);
 
 // ─── Inicio del servidor ───────────────────────────────────────────────────
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   const baseUrl = process.env.APP_BASE_URL ?? `http://localhost:${PORT}`;
 
   console.log('\n╔════════════════════════════════════════════╗');
@@ -93,6 +95,16 @@ app.listen(PORT, () => {
     console.log(`   📚   ${baseUrl}/api-docs  ← Swagger UI`);
   }
   console.log('\n⚙️  Revisa tu .env para confirmar configuraciones.\n');
+
+  // ─── Inicialización de la base de datos ─────────────────────────────────
+  console.log('\n🗄️  Verificando conexión a base de datos AWS...');
+  const dbOk = await checkDbConnection();
+  if (dbOk) {
+    // Crea las tablas si no existen (idempotente, seguro de re-ejecutar)
+    await PagoSimpleAudit.initTable();
+  } else {
+    console.warn('[DB] ⚠️  El servidor inicia SIN base de datos. Los logs de auditoría no se guardarán.');
+  }
 });
 
 export default app;

@@ -7,7 +7,7 @@ import { Router } from 'express';
 import { body, param } from 'express-validator';
 import {
   initiateSingleBuy,
-  initiatePagoSimple,
+  pagoSimpleGateway,
   rollback,
   getConfirmation,
   chargeBack,
@@ -279,8 +279,17 @@ router.post(
  * @swagger
  * /api/pagosimple:
  *   post:
- *     summary: Iniciar una compra simple y registrar auditoría (Pago Simple)
- *     tags: [Pago Simple]
+ *     summary: Gateway Unificado — Punto de entrada único para frontends externos
+ *     description: |
+ *       Un único endpoint que despacha hacia la operación de Bancard correcta según el campo `action`.
+ *       Todos los requests quedan registrados en la auditoría de MySQL.
+ *
+ *       **Acciones disponibles:**
+ *       - `single-buy`: Iniciar un nuevo pago (requiere `shopProcessId`, `amount`, `description`).
+ *       - `rollback`: Revertir una transacción pendiente (requiere `shopProcessId`).
+ *       - `confirmation`: Consultar el estado de una transacción (requiere `shopProcessId`).
+ *       - `charge-back`: Devolver un pago aprobado (requiere `shopProcessId`, `amount`).
+ *     tags: [Pago Simple — Gateway]
  *     requestBody:
  *       required: true
  *       content:
@@ -288,16 +297,33 @@ router.post(
  *           schema:
  *             type: object
  *             required:
- *               - shopProcessId
- *               - amount
- *               - description
+ *               - action
  *             properties:
+ *               action:
+ *                 type: string
+ *                 enum: [single-buy, rollback, confirmation, charge-back]
+ *                 example: "single-buy"
+ *                 description: Operación a ejecutar. Determina qué campos adicionales son necesarios.
+ *               servicio:
+ *                 type: string
+ *                 example: "boletos/custodia"
+ *                 description: Identificador del servicio para auditoría (opcional).
+ *               canal:
+ *                 type: string
+ *                 example: "totem/web/puntodeventa"
+ *                 description: Canal de venta para auditoría (opcional).
+ *               id:
+ *                 type: string
+ *                 example: "ref-externo-123"
+ *                 description: ID externo de referencia para auditoría (opcional).
  *               shopProcessId:
  *                 type: integer
  *                 example: 103
+ *                 description: Requerido para single-buy, rollback, confirmation y charge-back.
  *               amount:
  *                 type: number
  *                 example: 25000.00
+ *                 description: Requerido para single-buy y charge-back.
  *               currency:
  *                 type: string
  *                 enum: [PYG, USD]
@@ -306,18 +332,10 @@ router.post(
  *                 type: string
  *                 maxLength: 50
  *                 example: "Compra de Boleto"
- *               servicio:
- *                 type: string
- *                 example: "boletos/custodia"
- *               canal:
- *                 type: string
- *                 example: "totem/web/puntodeventa"
- *               id:
- *                 type: string
- *                 example: "ext-12345"
+ *                 description: Requerido solo para single-buy.
  *               additionalData:
  *                 type: string
- *                 example: "Detalles extra"
+ *                 example: "Datos adicionales"
  *               returnUrl:
  *                 type: string
  *                 format: uri
@@ -326,13 +344,56 @@ router.post(
  *                 type: string
  *                 format: uri
  *                 example: "https://midominio.com/pago/cancelado"
+ *           examples:
+ *             single-buy:
+ *               summary: Iniciar un pago
+ *               value:
+ *                 action: "single-buy"
+ *                 shopProcessId: 103
+ *                 amount: 25000.00
+ *                 currency: "PYG"
+ *                 description: "Compra de Boleto"
+ *                 servicio: "boletos/custodia"
+ *                 canal: "totem/web/puntodeventa"
+ *             rollback:
+ *               summary: Revertir una transacción
+ *               value:
+ *                 action: "rollback"
+ *                 shopProcessId: 103
+ *                 servicio: "boletos/custodia"
+ *                 canal: "totem"
+ *             confirmation:
+ *               summary: Consultar estado de una transacción
+ *               value:
+ *                 action: "confirmation"
+ *                 shopProcessId: 103
+ *             charge-back:
+ *               summary: Devolución de pago aprobado
+ *               value:
+ *                 action: "charge-back"
+ *                 shopProcessId: 103
+ *                 amount: 25000.00
+ *                 currency: "PYG"
  *     responses:
  *       200:
- *         description: Pago iniciado correctamente y auditoría guardada.
+ *         description: Operación ejecutada correctamente. La estructura de `data` varía según el `action`.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/ApiSuccessResponseSingleBuy'
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "success"
+ *                 action:
+ *                   type: string
+ *                   example: "single-buy"
+ *                 message:
+ *                   type: string
+ *                   example: "Compra iniciada exitosamente."
+ *                 data:
+ *                   type: object
+ *                   description: Resultado de la operación. Ver esquemas específicos por acción.
  *       400:
  *         description: Error en la comunicación con Bancard
  *         content:
@@ -340,7 +401,7 @@ router.post(
  *             schema:
  *               $ref: '#/components/schemas/ApiErrorResponse'
  *       422:
- *         description: Parámetros de entrada inválidos
+ *         description: Parámetros de entrada inválidos o acción no reconocida
  *         content:
  *           application/json:
  *             schema:
@@ -355,20 +416,20 @@ router.post(
 pagoSimpleRouter.post(
   '/pagosimple',
   [
-    shopProcessIdBodyValidation(),
-    amountValidation(),
-    currencyValidation(),
+    body('action')
+      .notEmpty().withMessage('El campo action es requerido.')
+      .isIn(['single-buy', 'rollback', 'confirmation', 'charge-back'])
+      .withMessage('action debe ser: single-buy, rollback, confirmation o charge-back.'),
     servicioValidation(),
     canalValidation(),
     idValidation(),
-    body('description')
-      .notEmpty().withMessage('description es requerida.')
-      .isLength({ max: 50 }).withMessage('description no puede superar 50 caracteres.'),
+    body('currency').optional().isIn(['PYG', 'USD']).withMessage('currency debe ser PYG o USD.'),
     body('additionalData').optional().isString(),
     body('returnUrl').optional().isURL().withMessage('returnUrl debe ser una URL válida.'),
     body('cancelUrl').optional().isURL().withMessage('cancelUrl debe ser una URL válida.'),
+    body('description').optional().isString().isLength({ max: 50 }).withMessage('description no puede superar 50 caracteres.'),
   ],
-  initiatePagoSimple,
+  pagoSimpleGateway,
 );
 
 /**

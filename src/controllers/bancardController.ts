@@ -89,78 +89,197 @@ export const initiateSingleBuy = async (
   }
 };
 
-// ─── 1.B POST /api/bancard/pagosimple ───────────────────────────────────────
+// ─── 1.B POST /api/pagosimple — Gateway Unificado ────────────────────────────
+// Único punto de entrada para frontends externos.
+// El campo `action` determina qué operación de Bancard se ejecuta.
 
-export const initiatePagoSimple = async (
-  req: Request<ParamsDictionary, unknown, PagoSimpleRequest>,
+export const pagoSimpleGateway = async (
+  req: Request<Record<string, never>, unknown, PagoSimpleRequest>,
   res: Response,
 ): Promise<void> => {
   if (!checkValidation(req, res)) return;
 
+  const { action, servicio, canal, id } = req.body;
+  let result: unknown = null;
+  let statusCode = 200;
+  let responseBody: unknown = null;
+
+  // ─── Auditoría base (se guarda siempre) ──────────────────────────────────
+  const auditBase = {
+    externalId: id,
+    servicio,
+    canal,
+    shopProcessId: req.body.shopProcessId ?? 0,
+    amount: req.body.amount ?? 0,
+    requestPayload: req.body,
+  };
+
   try {
-    const { shopProcessId, amount, currency, description, additionalData, returnUrl, cancelUrl, servicio, canal, id } = req.body;
+    switch (action) {
 
-    const result = await bancardService.initiateSingleBuy({
-      shopProcessId,
-      amount,
-      currency,
-      description,
-      additionalData,
-      returnUrl,
-      cancelUrl,
-    });
+      // ── 1. single-buy: iniciar una nueva compra ───────────────────────────
+      case 'single-buy': {
+        const { shopProcessId, amount, currency, description, additionalData, returnUrl, cancelUrl } = req.body;
 
-    // Guardar auditoría exitosa
+        if (!shopProcessId || !amount || !description) {
+          res.status(422).json({
+            status: 'error',
+            message: 'Datos de entrada inválidos.',
+            errors: [
+              ...(!shopProcessId ? [{ field: 'shopProcessId', message: 'shopProcessId es requerido para single-buy.' }] : []),
+              ...(!amount ? [{ field: 'amount', message: 'amount es requerido para single-buy.' }] : []),
+              ...(!description ? [{ field: 'description', message: 'description es requerida para single-buy.' }] : []),
+            ],
+          });
+          return;
+        }
+
+        result = await bancardService.initiateSingleBuy({
+          shopProcessId,
+          amount,
+          currency,
+          description,
+          additionalData,
+          returnUrl,
+          cancelUrl,
+        });
+
+        responseBody = {
+          status: 'success',
+          action,
+          message: 'Compra iniciada exitosamente.',
+          data: result,
+        };
+        break;
+      }
+
+      // ── 2. rollback: revertir transacción pendiente ───────────────────────
+      case 'rollback': {
+        const { shopProcessId } = req.body;
+
+        if (!shopProcessId) {
+          res.status(422).json({
+            status: 'error',
+            message: 'Datos de entrada inválidos.',
+            errors: [{ field: 'shopProcessId', message: 'shopProcessId es requerido para rollback.' }],
+          });
+          return;
+        }
+
+        result = await bancardService.rollback(shopProcessId);
+
+        responseBody = {
+          status: 'success',
+          action,
+          message: 'Rollback ejecutado correctamente.',
+          data: result,
+        };
+        break;
+      }
+
+      // ── 3. confirmation: consultar estado de una transacción ──────────────
+      case 'confirmation': {
+        const { shopProcessId } = req.body;
+
+        if (!shopProcessId) {
+          res.status(422).json({
+            status: 'error',
+            message: 'Datos de entrada inválidos.',
+            errors: [{ field: 'shopProcessId', message: 'shopProcessId es requerido para confirmation.' }],
+          });
+          return;
+        }
+
+        result = await bancardService.getConfirmation(shopProcessId);
+
+        responseBody = {
+          status: 'success',
+          action,
+          message: 'Confirmación obtenida correctamente.',
+          data: result,
+        };
+        break;
+      }
+
+      // ── 4. charge-back: devolución de un pago aprobado ───────────────────
+      case 'charge-back': {
+        const { shopProcessId, amount, currency } = req.body;
+
+        if (!shopProcessId || !amount) {
+          res.status(422).json({
+            status: 'error',
+            message: 'Datos de entrada inválidos.',
+            errors: [
+              ...(!shopProcessId ? [{ field: 'shopProcessId', message: 'shopProcessId es requerido para charge-back.' }] : []),
+              ...(!amount ? [{ field: 'amount', message: 'amount es requerido para charge-back.' }] : []),
+            ],
+          });
+          return;
+        }
+
+        result = await bancardService.chargeBack({ shopProcessId, amount, currency });
+
+        responseBody = {
+          status: 'success',
+          action,
+          message: 'Contracargo procesado correctamente.',
+          data: result,
+        };
+        break;
+      }
+
+      // ── Acción desconocida (no debería llegar aquí por la validación) ─────
+      default: {
+        res.status(422).json({
+          status: 'error',
+          message: `Acción no reconocida: "${action}". Valores válidos: single-buy, rollback, confirmation, charge-back.`,
+        });
+        return;
+      }
+    }
+
+    // ─── Auditoría exitosa ────────────────────────────────────────────────
     await PagoSimpleAudit.saveAuditLog({
-      externalId: id,
-      servicio,
-      canal,
-      shopProcessId,
-      amount,
-      requestPayload: req.body,
-      bancardResponse: result.rawResponse
+      ...auditBase,
+      bancardResponse: result,
     });
 
-    const body: ApiSuccessResponse<typeof result> = {
-      status: 'success',
-      message: 'Compra iniciada exitosamente.',
-      data: result,
-    };
-    res.status(200).json(body);
+    res.status(statusCode).json(responseBody);
+
   } catch (error) {
-    let errorResponse: any;
-    let statusCode = 500;
+    // ─── Manejo centralizado de errores ──────────────────────────────────
+    let errorResponse: unknown;
 
     if (error instanceof BancardApiError) {
       errorResponse = {
         status: 'error',
+        action,
         message: error.message,
         bancardMessages: error.bancardMessages,
       };
       statusCode = 400;
     } else {
       const message = error instanceof Error ? error.message : 'Error desconocido';
+      console.error(`[pagoSimpleGateway] Error en acción "${action}":`, message);
       errorResponse = {
         status: 'error',
+        action,
         message: 'Error interno del servidor al comunicarse con Bancard.',
         ...(process.env.NODE_ENV !== 'production' && { detail: message }),
       };
+      statusCode = 500;
     }
 
-    // Guardar auditoría fallida
+    // ─── Auditoría fallida ────────────────────────────────────────────────
     await PagoSimpleAudit.saveAuditLog({
-      externalId: req.body.id,
-      servicio: req.body.servicio,
-      canal: req.body.canal,
-      shopProcessId: req.body.shopProcessId,
-      amount: req.body.amount,
-      requestPayload: req.body,
-      bancardResponse: errorResponse
+      ...auditBase,
+      bancardResponse: errorResponse,
     });
 
     res.status(statusCode).json(errorResponse);
   }
 };
+
 
 // ─── 2. POST /api/bancard/rollback ─────────────────────────────────────────
 

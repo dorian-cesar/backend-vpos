@@ -150,10 +150,31 @@ export interface SingleBuyRequest {
   cancelUrl?: string;
 }
 
-export interface PagoSimpleRequest extends SingleBuyRequest {
+// ─── Acciones disponibles en el Gateway /api/pagosimple ───────────────────
+// Discriminador que el frontend envía para indicar qué operación ejecutar.
+export type PagoSimpleAction =
+  | 'single-buy'    // Iniciar una nueva compra (flujo principal)
+  | 'rollback'      // Revertir una transacción pendiente/no confirmada
+  | 'confirmation'  // Consultar el estado de una transacción
+  | 'charge-back';  // Devolución de un pago ya aprobado
+
+export interface PagoSimpleRequest {
+  // ─── Discriminador (siempre requerido) ─────────────────────────────────
+  action: PagoSimpleAction;
+
+  // ─── Auditoría (opcionales, aplican a todas las acciones) ──────────────
   servicio?: string;
   canal?: string;
   id?: string;
+
+  // ─── Campos para 'single-buy' ──────────────────────────────────────────
+  shopProcessId?: number;
+  amount?: number;
+  currency?: BancardCurrency;
+  description?: string;
+  additionalData?: string;
+  returnUrl?: string;
+  cancelUrl?: string;
 }
 
 export interface RollbackRequest {

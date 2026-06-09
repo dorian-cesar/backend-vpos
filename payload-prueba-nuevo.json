@@ -1,0 +1,14 @@
+{
+  "public_key": "mZyf9Em4w9naOGoy06JMIyQPPAvwXbi3",
+  "operation": {
+    "token": "eae75c3014e7caaeafaddc4ba0c5114b",
+    "shop_process_id": 220000312851853,
+    "currency": "PYG",
+    "amount": "40000.00",
+    "additional_data": "",
+    "description": "Boleto Aduana Argentina → Banco Itau",
+    "return_url": "https://wit-bancard.dev-wit.com/confirm_payment",
+    "cancel_url": "https://wit-bancard.dev-wit.com/confirm_payment"
+  },
+  "test_client": true
+}

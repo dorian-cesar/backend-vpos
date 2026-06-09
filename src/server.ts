@@ -12,7 +12,7 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import bancardRoutes, { pagoSimpleRouter } from './routes/bancard.routes.js';
-import { paymentSuccessHandler } from './controllers/bancardController.js';
+import { paymentSuccessHandler, confirmWebhook } from './controllers/bancardController.js';
 import errorHandler from './middleware/errorHandler.js';
 import requestLogger from './middleware/requestLogger.js';
 import swaggerUi from 'swagger-ui-express';
@@ -59,6 +59,8 @@ app.use('/api', pagoSimpleRouter);
 
 // Ruta para la redirección después del iframe (Bancard returnUrl)
 app.get('/confirm_payment', paymentSuccessHandler);
+// Ruta para el Webhook de confirmación que envía Bancard
+app.post('/confirm_payment', confirmWebhook);
 
 // Swagger
 if (process.env.SWAGGER_VISIBLE === 'true') {

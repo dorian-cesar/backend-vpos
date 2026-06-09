@@ -56,8 +56,8 @@ const config: BancardConfigInternal = {
   // ─── Rutas de la API de Bancard ───────────────────────────────────────────
   apiPaths: {
     singleBuy: '/vpos/api/0.3/single_buy',
-    rollback: '/vpos/api/0.3/single_buy/{process_id}/rollback',
-    getConfirmation: '/vpos/api/0.3/single_buy/{process_id}',
+    rollback: '/vpos/api/0.3/single_buy/rollback',
+    getConfirmation: '/vpos/api/0.3/single_buy/confirmations',
     chargeBack: '/vpos/api/0.3/single_buy/charge_back',
   },
 

@@ -146,9 +146,7 @@ export class BancardHttpAdapter implements IBancardAdapter {
     const publicKey = this.strategy.getPublicKey();
     const token = generateRollbackToken(privateKey, shopProcessId);
 
-    const url = this.strategy.buildEndpointUrl(bancardConfig.apiPaths.rollback, {
-      process_id: shopProcessId,
-    });
+    const url = this.strategy.buildEndpointUrl(bancardConfig.apiPaths.rollback);
 
     const requestBody = {
       public_key: publicKey,
@@ -185,9 +183,7 @@ export class BancardHttpAdapter implements IBancardAdapter {
     const publicKey = this.strategy.getPublicKey();
     const token = generateGetConfirmationToken(privateKey, shopProcessId);
 
-    const url = this.strategy.buildEndpointUrl(bancardConfig.apiPaths.getConfirmation, {
-      process_id: shopProcessId,
-    });
+    const url = this.strategy.buildEndpointUrl(bancardConfig.apiPaths.getConfirmation);
 
     const requestBody = {
       public_key: publicKey,

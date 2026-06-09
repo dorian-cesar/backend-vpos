@@ -28,7 +28,7 @@ export const generateSingleBuyToken = (
 export const generateRollbackToken = (
   privateKey: string,
   shopProcessId: number | string,
-): string => md5(`${privateKey}${shopProcessId}rollback0.00PYG`);
+): string => md5(`${privateKey}${shopProcessId}rollback0.00`);
 
 /**
  * Genera el token de seguridad para `get_single_buy_confirmation`.

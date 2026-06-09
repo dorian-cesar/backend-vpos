@@ -20,6 +20,7 @@ interface BancardConfigInternal {
     rollback: string;
     getConfirmation: string;
     chargeBack: string;
+    cardsNew: string;
   };
   readonly iframeUrl: string;
   httpTimeout: number;

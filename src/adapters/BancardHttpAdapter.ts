@@ -16,6 +16,7 @@ import {
   generateRollbackToken,
   generateGetConfirmationToken,
   generateChargeBackToken,
+  generateCardsNewToken,
 } from '../utils/tokenGenerator.js';
 import { BancardStrategy } from '../strategies/BancardStrategy.js';
 import type {
@@ -25,6 +26,7 @@ import type {
   GetConfirmationParams,
   RollbackParams,
   SingleBuyParams,
+  CardsNewParams,
   IBancardAdapter,
 } from '../types/bancard.types.js';
 

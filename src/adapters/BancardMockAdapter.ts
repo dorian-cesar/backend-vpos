@@ -90,6 +90,15 @@ export class BancardMockAdapter implements IBancardAdapter {
     };
   }
 
+  async cardsNew(params: any): Promise<BancardRawResponse> {
+    await this._delay();
+    console.log(`[BancardMockAdapter] 💳 Simulando cardsNew para cardId: ${params.cardId}`);
+    return {
+      status: 'success',
+      process_id: `mock_cards_new_${this._generateProcessId()}`,
+    };
+  }
+
   getIframeUrl(processId: string): string {
     // Usamos la URL de staging para que apunte a un dominio válido (aunque fallará por el process_id inválido)
     // Opcionalmente podrías retornar una URL de localhost que levante un HTML simulado.

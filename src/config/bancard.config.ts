@@ -77,7 +77,7 @@ const config: BancardConfigInternal = {
     return process.env.APP_BASE_URL ?? process.env.APP_URL ?? 'http://localhost:3000';
   },
   get returnUrl(): string {
-    const url = process.env.RETURN_URL ?? '/api/bancard/success';
+    const url = process.env.RETURN_URL ?? '/confirm_payment';
     return url.startsWith('http') ? url : `${this.appUrl}${url.startsWith('/') ? '' : '/'}${url}`;
   },
   get cancelUrl(): string {

@@ -179,10 +179,15 @@ export const pagoSimpleGateway = async (
         result = await bancardService.rollback(shopProcessId);
 
         responseBody = {
-          status: 'success',
+          status: result.status,
           action,
-          message: 'Rollback ejecutado correctamente.',
-          data: result,
+          message: result.status === 'success' ? 'Rollback ejecutado correctamente.' : 'Error al ejecutar rollback.',
+          data: {
+            shopProcessId,
+            processed: result.status === 'success',
+            messages: result.messages,
+            rawResponse: result.rawResponse
+          },
         };
         break;
       }
@@ -313,10 +318,15 @@ export const rollback = async (
     const { shopProcessId } = req.body;
     const result = await bancardService.rollback(shopProcessId);
 
-    const body: ApiSuccessResponse<typeof result> = {
-      status: 'success',
-      message: 'Rollback ejecutado.',
-      data: result,
+    const body: any = {
+      status: result.status,
+      message: result.status === 'success' ? 'Rollback ejecutado correctamente.' : 'Error al ejecutar rollback.',
+      data: {
+        shopProcessId,
+        processed: result.status === 'success',
+        messages: result.messages,
+        rawResponse: result.rawResponse
+      },
     };
     res.status(200).json(body);
   } catch (error) {

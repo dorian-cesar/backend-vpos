@@ -408,8 +408,12 @@ export const confirmWebhook = (req: Request<ParamsDictionary, unknown, BancardWe
     });
 
     res.status(200).json({
-      status: 'hola',
-      data: { shopProcessId: confirmation.shopProcessId, processed: true },
+      status: confirmation.status,
+      data: { 
+        shopProcessId: confirmation.shopProcessId, 
+        processed: true,
+        rawResponse: confirmation.rawOperation
+      },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Error desconocido';

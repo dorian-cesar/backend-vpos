@@ -37,7 +37,7 @@ const config: BancardConfigInternal = {
   // ─── Entornos ─────────────────────────────────────────────────────────────
   environments: {
     staging: {
-      baseUrl: process.env.BANCARD_STAGING_URL ?? 'https://vpos.infonet.com.py:8888',
+      baseUrl: process.env.BANCARD_BASE_URL_STAGING ?? process.env.BANCARD_STAGING_URL ?? 'https://vpos.infonet.com.py:8888',
       name: 'staging' as BancardEnvironmentName,
     },
     production: {

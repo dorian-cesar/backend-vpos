@@ -408,7 +408,7 @@ export const confirmWebhook = (req: Request<ParamsDictionary, unknown, BancardWe
     });
 
     res.status(200).json({
-      status: 'success',
+      status: 'hola',
       data: { shopProcessId: confirmation.shopProcessId, processed: true },
     });
   } catch (error) {

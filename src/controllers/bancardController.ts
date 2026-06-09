@@ -176,17 +176,18 @@ export const pagoSimpleGateway = async (
           return;
         }
 
-        result = await bancardService.rollback(shopProcessId);
+        const rollbackResult = await bancardService.rollback(shopProcessId);
+        result = rollbackResult;
 
         responseBody = {
-          status: result.status,
+          status: rollbackResult.status,
           action,
-          message: result.status === 'success' ? 'Rollback ejecutado correctamente.' : 'Error al ejecutar rollback.',
+          message: rollbackResult.status === 'success' ? 'Rollback ejecutado correctamente.' : 'Error al ejecutar rollback.',
           data: {
             shopProcessId,
-            processed: result.status === 'success',
-            messages: result.messages,
-            rawResponse: result.rawResponse
+            processed: rollbackResult.status === 'success',
+            messages: rollbackResult.messages,
+            rawResponse: rollbackResult.rawResponse
           },
         };
         break;

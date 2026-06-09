@@ -4,7 +4,8 @@ const dbHost = process.env.URL_DB || process.env.DB_HOST || 'localhost';
 const dbPort = Number(process.env.PORT_DB || process.env.DB_PORT || 3306);
 const dbUser = process.env.USER_DB || process.env.DB_USER || 'root';
 const dbPassword = process.env.PASSWORD_DB || process.env.DB_PASSWORD || '';
-const dbName = process.env.DB_NAME || 'bancard_vpos';
+const isProd = process.env.NODE_ENV === 'production';
+const dbName = (isProd ? process.env.DB_NAME : (process.env.DB_NAME_DEV || process.env.DB_NAME)) || 'bancard_vpos';
 
 console.log(`[DB] Inicializando conexión para ${dbHost}:${dbPort} (BD: ${dbName})`);
 

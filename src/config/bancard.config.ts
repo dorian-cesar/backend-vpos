@@ -72,10 +72,18 @@ const config: BancardConfigInternal = {
   // ─── Moneda por defecto ───────────────────────────────────────────────────
   defaultCurrency: (process.env.DEFAULT_CURRENCY as BancardCurrency | undefined) ?? 'PYG',
 
-  // ─── URLs de la app ───────────────────────────────────────────────────────
-  appUrl: process.env.APP_URL ?? 'http://localhost:3000',
-  returnUrl: process.env.RETURN_URL ?? 'http://localhost:3000/payment/success',
-  cancelUrl: process.env.CANCEL_URL ?? 'http://localhost:3000/payment/cancel',
+  // ─── URLs de la app (getters para soportar paths relativos) ───────────────
+  get appUrl(): string {
+    return process.env.APP_BASE_URL ?? process.env.APP_URL ?? 'http://localhost:3000';
+  },
+  get returnUrl(): string {
+    const url = process.env.RETURN_URL ?? '/api/bancard/success';
+    return url.startsWith('http') ? url : `${this.appUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+  },
+  get cancelUrl(): string {
+    const url = process.env.CANCEL_URL ?? '/api/bancard/cancel';
+    return url.startsWith('http') ? url : `${this.appUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+  },
 };
 
 export default config;

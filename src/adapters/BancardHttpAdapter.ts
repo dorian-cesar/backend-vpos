@@ -158,7 +158,18 @@ export class BancardHttpAdapter implements IBancardAdapter {
       },
     };
 
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('[BancardAdapter] ► rollback REQUEST:');
+    console.log('  URL Bancard:', url);
+    console.log('  Payload crudo enviado a Bancard:', JSON.stringify(requestBody, null, 2));
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
     const response = await this.httpClient.post<BancardRawResponse>(url, requestBody);
+
+    console.log('[BancardAdapter] ◄ rollback RESPONSE (HTTP', response.status, '):');
+    console.log(JSON.stringify(response.data, null, 2));
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
     return response.data;
   }
 
@@ -227,7 +238,18 @@ export class BancardHttpAdapter implements IBancardAdapter {
       },
     };
 
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('[BancardAdapter] ► charge_back REQUEST:');
+    console.log('  URL Bancard:', url);
+    console.log('  Payload crudo enviado a Bancard:', JSON.stringify(requestBody, null, 2));
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
     const response = await this.httpClient.post<BancardRawResponse>(url, requestBody);
+
+    console.log('[BancardAdapter] ◄ charge_back RESPONSE (HTTP', response.status, '):');
+    console.log(JSON.stringify(response.data, null, 2));
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
     return response.data;
   }
 

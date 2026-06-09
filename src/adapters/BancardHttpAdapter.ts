@@ -115,7 +115,26 @@ export class BancardHttpAdapter implements IBancardAdapter {
       },
     };
 
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+    console.log('[BancardAdapter] ► single_buy REQUEST:')
+    console.log('  URL Bancard:', url)
+    console.log('  Entorno:', this.strategy.getEnvironmentName())
+    console.log('  public_key:', publicKey)
+    console.log('  shop_process_id:', shopProcessId)
+    console.log('  amount:', formattedAmount)
+    console.log('  currency:', currency)
+    console.log('  description:', description.substring(0, 50))
+    console.log('  return_url:', returnUrl ?? bancardConfig.returnUrl)
+    console.log('  cancel_url:', cancelUrl ?? bancardConfig.cancelUrl)
+    console.log('  token (md5):', token)
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+
     const response = await this.httpClient.post<BancardRawResponse>(url, requestBody);
+
+    console.log('[BancardAdapter] ◄ single_buy RESPONSE (HTTP', response.status, '):')
+    console.log(JSON.stringify(response.data, null, 2))
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+
     return response.data;
   }
 
@@ -171,7 +190,19 @@ export class BancardHttpAdapter implements IBancardAdapter {
       },
     };
 
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+    console.log('[BancardAdapter] ► get_single_buy_confirmation REQUEST:')
+    console.log('  URL Bancard:', url)
+    console.log('  shop_process_id:', shopProcessId)
+    console.log('  token (md5):', token)
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+
     const response = await this.httpClient.post<BancardRawResponse>(url, requestBody);
+
+    console.log('[BancardAdapter] ◄ get_single_buy_confirmation RESPONSE (HTTP', response.status, '):')
+    console.log(JSON.stringify(response.data, null, 2))
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+
     return response.data;
   }
 

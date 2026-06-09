@@ -428,3 +428,37 @@ export const healthCheck = (_req: Request, res: Response): void => {
     timestamp: new Date().toISOString(),
   });
 };
+
+// ─── 7. Helpers para Visualización (Success / Fail URLs) ─────────────────────
+
+export const paymentSuccessHandler = (req: Request, res: Response): void => {
+  const query = JSON.stringify(req.query, null, 2);
+  res.send(`
+    <html>
+      <head><title>Pago Exitoso - Bancard</title></head>
+      <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f0fdf4; color: #166534;">
+        <h1 style="color: #15803d;">¡Pago Exitoso!</h1>
+        <p>Bancard redirigió a la URL de éxito correctamente.</p>
+        <pre style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #bbf7d0; display: inline-block; text-align: left;">
+${query}
+        </pre>
+      </body>
+    </html>
+  `);
+};
+
+export const paymentCancelHandler = (req: Request, res: Response): void => {
+  const query = JSON.stringify(req.query, null, 2);
+  res.send(`
+    <html>
+      <head><title>Pago Cancelado / Fallido - Bancard</title></head>
+      <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #fef2f2; color: #991b1b;">
+        <h1 style="color: #b91c1c;">Pago Cancelado o Fallido</h1>
+        <p>Bancard redirigió a la URL de cancelación/error.</p>
+        <pre style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #fecaca; display: inline-block; text-align: left;">
+${query}
+        </pre>
+      </body>
+    </html>
+  `);
+};

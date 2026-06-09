@@ -13,6 +13,8 @@ import {
   chargeBack,
   confirmWebhook,
   healthCheck,
+  paymentSuccessHandler,
+  paymentCancelHandler,
 } from '../controllers/bancardController.js';
 
 const router = Router();
@@ -661,5 +663,23 @@ router.post(
  *                   example: "Error procesando confirmación."
  */
 router.post('/confirm', confirmWebhook);
+
+/**
+ * @swagger
+ * /api/bancard/success:
+ *   get:
+ *     summary: URL de retorno para pago exitoso (uso en testing)
+ *     tags: [Visualización]
+ */
+router.get('/success', paymentSuccessHandler);
+
+/**
+ * @swagger
+ * /api/bancard/cancel:
+ *   get:
+ *     summary: URL de retorno para pago cancelado o fallido (uso en testing)
+ *     tags: [Visualización]
+ */
+router.get('/cancel', paymentCancelHandler);
 
 export default router;

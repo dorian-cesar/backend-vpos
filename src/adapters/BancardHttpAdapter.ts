@@ -101,7 +101,7 @@ export class BancardHttpAdapter implements IBancardAdapter {
 
     const url = this.strategy.buildEndpointUrl(bancardConfig.apiPaths.singleBuy);
 
-    const requestBody = {
+    const requestBody: Record<string, any> = {
       public_key: publicKey,
       operation: {
         token,
@@ -114,6 +114,10 @@ export class BancardHttpAdapter implements IBancardAdapter {
         cancel_url: cancelUrl ?? bancardConfig.cancelUrl,
       },
     };
+
+    if (bancardConfig.currentEnvironment.name === 'staging') {
+      requestBody.test_client = true;
+    }
 
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
     console.log('[BancardAdapter] ► single_buy REQUEST:')

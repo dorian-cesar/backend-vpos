@@ -249,6 +249,51 @@ export class BancardHttpAdapter implements IBancardAdapter {
     return response.data;
   }
 
+  // ─── cards/new ─────────────────────────────────────────────────────────────
+
+  /**
+   * Inicia el proceso de catastro de una nueva tarjeta.
+   */
+  async cardsNew(params: CardsNewParams): Promise<BancardRawResponse> {
+    const { cardId, userId, userCellPhone, userMail, returnUrl } = params;
+
+    const privateKey = this.strategy.getPrivateKey();
+    const publicKey = this.strategy.getPublicKey();
+    const token = generateCardsNewToken(privateKey, cardId, userId);
+
+    const url = this.strategy.buildEndpointUrl(bancardConfig.apiPaths.cardsNew);
+
+    const requestBody: Record<string, any> = {
+      public_key: publicKey,
+      operation: {
+        token,
+        card_id: cardId,
+        user_id: userId,
+        user_cell_phone: userCellPhone,
+        user_mail: userMail,
+        return_url: returnUrl ?? bancardConfig.returnUrl,
+      },
+    };
+
+    if (bancardConfig.currentEnvironment.name === 'staging') {
+      requestBody.test_client = true;
+    }
+
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('[BancardAdapter] ► cards_new REQUEST:');
+    console.log('  URL Bancard:', url);
+    console.log('  Payload crudo enviado a Bancard:', JSON.stringify(requestBody, null, 2));
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+    const response = await this.httpClient.post<BancardRawResponse>(url, requestBody);
+
+    console.log('[BancardAdapter] ◄ cards_new RESPONSE (HTTP', response.status, '):');
+    console.log(JSON.stringify(response.data, null, 2));
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+    return response.data;
+  }
+
   // ─── Helpers públicos ──────────────────────────────────────────────────────
 
   /** Retorna la URL del iframe de pago para el `process_id` dado. */

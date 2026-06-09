@@ -44,6 +44,14 @@ export interface ChargeBackParams {
   currency?: BancardCurrency;
 }
 
+export interface CardsNewParams {
+  cardId: number | string;
+  userId: number | string;
+  userCellPhone: string;
+  userMail: string;
+  returnUrl?: string;
+}
+
 // ─── Respuestas crudas de la API de Bancard ───────────────────────────────
 
 export interface BancardRawResponse {
@@ -81,6 +89,7 @@ export interface IBancardAdapter {
   rollback(params: RollbackParams): Promise<BancardRawResponse>;
   getConfirmation(params: GetConfirmationParams): Promise<BancardRawResponse>;
   chargeBack(params: ChargeBackParams): Promise<BancardRawResponse>;
+  cardsNew(params: CardsNewParams): Promise<BancardRawResponse>;
   getIframeUrl(processId: string): string;
   getSdkUrl(): string;
   getEnvironment(): string;
@@ -92,6 +101,13 @@ export interface SingleBuyResult {
   processId: string;
   iframeUrl: string;
   sdkUrl: string;
+  status: string;
+  environment: BancardEnvironmentName;
+  rawResponse: BancardRawResponse;
+}
+
+export interface CardsNewResult {
+  processId: string;
   status: string;
   environment: BancardEnvironmentName;
   rawResponse: BancardRawResponse;
@@ -156,7 +172,8 @@ export type PagoSimpleAction =
   | 'single-buy'    // Iniciar una nueva compra (flujo principal)
   | 'rollback'      // Revertir una transacción pendiente/no confirmada
   | 'confirmation'  // Consultar el estado de una transacción
-  | 'charge-back';  // Devolución de un pago ya aprobado
+  | 'charge-back'   // Devolución de un pago ya aprobado
+  | 'cards-new';    // Iniciar proceso de catastro de nueva tarjeta
 
 export interface PagoSimpleRequest {
   // ─── Discriminador (siempre requerido) ─────────────────────────────────
@@ -167,7 +184,7 @@ export interface PagoSimpleRequest {
   canal?: string;
   id?: string;
 
-  // ─── Campos para 'single-buy' ──────────────────────────────────────────
+  // ─── Campos para 'single-buy' y 'charge-back' ──────────────────────────
   shopProcessId?: number;
   amount?: number;
   currency?: BancardCurrency;
@@ -175,6 +192,12 @@ export interface PagoSimpleRequest {
   additionalData?: string;
   returnUrl?: string;
   cancelUrl?: string;
+
+  // ─── Campos para 'cards-new' ──────────────────────────────────────────
+  cardId?: number;
+  userId?: number;
+  userCellPhone?: string;
+  userMail?: string;
 }
 
 export interface RollbackRequest {

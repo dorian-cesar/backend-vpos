@@ -115,6 +115,33 @@ export class BancardService {
     };
   }
 
+  // ─── Catastro de Tarjetas (Cards New) ──────────────────────────────────────
+
+  /**
+   * Inicia el proceso de catastro de una tarjeta.
+   */
+  async initiateCardsNew(params: import('../types/bancard.types.js').CardsNewParams): Promise<import('../types/bancard.types.js').CardsNewResult> {
+    const bancardResponse = await this.adapter.cardsNew(params);
+
+    const processId = bancardResponse.process_id;
+    const status = bancardResponse.status;
+
+    if (status !== 'success' || !processId) {
+      throw new BancardApiError(
+        'Error al iniciar el catastro de tarjeta con Bancard.',
+        bancardResponse,
+        bancardResponse.messages ?? [],
+      );
+    }
+
+    return {
+      processId,
+      status,
+      environment: this.adapter.getEnvironment() as 'staging' | 'production',
+      rawResponse: bancardResponse,
+    };
+  }
+
   // ─── Rollback ───────────────────────────────────────────────────────────────
 
   /**

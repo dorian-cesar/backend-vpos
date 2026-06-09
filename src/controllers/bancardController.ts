@@ -163,6 +163,41 @@ export const pagoSimpleGateway = async (
         break;
       }
 
+      // ── 1.5. cards-new: iniciar catastro de tarjeta ───────────────────────
+      case 'cards-new': {
+        const { cardId, userId, userCellPhone, userMail, returnUrl } = req.body;
+
+        if (!cardId || !userId || !userCellPhone || !userMail) {
+          res.status(422).json({
+            status: 'error',
+            message: 'Datos de entrada inválidos.',
+            errors: [
+              ...(!cardId ? [{ field: 'cardId', message: 'cardId es requerido para cards-new.' }] : []),
+              ...(!userId ? [{ field: 'userId', message: 'userId es requerido para cards-new.' }] : []),
+              ...(!userCellPhone ? [{ field: 'userCellPhone', message: 'userCellPhone es requerido para cards-new.' }] : []),
+              ...(!userMail ? [{ field: 'userMail', message: 'userMail es requerido para cards-new.' }] : []),
+            ],
+          });
+          return;
+        }
+
+        result = await bancardService.initiateCardsNew({
+          cardId,
+          userId,
+          userCellPhone,
+          userMail,
+          returnUrl,
+        });
+
+        responseBody = {
+          status: 'success',
+          action,
+          message: 'Catastro de tarjeta iniciado exitosamente.',
+          data: result,
+        };
+        break;
+      }
+
       // ── 2. rollback: revertir transacción pendiente ───────────────────────
       case 'rollback': {
         const { shopProcessId } = req.body;

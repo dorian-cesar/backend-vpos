@@ -7,6 +7,7 @@
  *   single_buy_rollback: md5(private_key + shop_process_id + "rollback" + "0.00" + "PYG")
  *   get_confirmation:    md5(private_key + shop_process_id + "get_confirmation")
  *   charge_back:         md5(private_key + shop_process_id + "charge_back" + amount + currency)
+ *   cards_new:           md5(private_key + card_id + user_id + "request_new_card")
  */
 
 import md5 from 'md5';
@@ -47,3 +48,12 @@ export const generateChargeBackToken = (
   amount: number | string,
   currency: BancardCurrency,
 ): string => md5(`${privateKey}${shopProcessId}charge_back${amount}${currency}`);
+
+/**
+ * Genera el token de seguridad para `cards/new` (Catastro de Tarjetas).
+ */
+export const generateCardsNewToken = (
+  privateKey: string,
+  cardId: number | string,
+  userId: number | string,
+): string => md5(`${privateKey}${cardId}${userId}request_new_card`);

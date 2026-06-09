@@ -59,6 +59,7 @@ const config: BancardConfigInternal = {
     rollback: '/vpos/api/0.3/single_buy/rollback',
     getConfirmation: '/vpos/api/0.3/single_buy/confirmations',
     chargeBack: '/vpos/api/0.3/single_buy/charge_back',
+    cardsNew: '/vpos/api/0.3/cards/new',
   },
 
   // ─── URL del iframe (getter) ──────────────────────────────────────────────

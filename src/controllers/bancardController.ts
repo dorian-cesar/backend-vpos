@@ -433,12 +433,30 @@ export const healthCheck = (_req: Request, res: Response): void => {
 
 export const paymentSuccessHandler = (req: Request, res: Response): void => {
   const query = JSON.stringify(req.query, null, 2);
+  const isFail = req.query.status === 'payment_fail';
+
+  if (isFail) {
+    res.send(`
+      <html>
+        <head><title>Pago Fallido - Bancard</title></head>
+        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #fef2f2; color: #991b1b;">
+          <h1 style="color: #b91c1c;">El pago ha fallado</h1>
+          <p>Bancard redirigió a la URL de retorno, pero indicó que el pago falló (status: payment_fail).</p>
+          <pre style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #fecaca; display: inline-block; text-align: left;">
+${query}
+          </pre>
+        </body>
+      </html>
+    `);
+    return;
+  }
+
   res.send(`
     <html>
       <head><title>Pago Exitoso - Bancard</title></head>
       <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f0fdf4; color: #166534;">
         <h1 style="color: #15803d;">¡Pago Exitoso!</h1>
-        <p>Bancard redirigió a la URL de éxito correctamente.</p>
+        <p>Bancard redirigió a la URL de éxito y no reportó errores.</p>
         <pre style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #bbf7d0; display: inline-block; text-align: left;">
 ${query}
         </pre>

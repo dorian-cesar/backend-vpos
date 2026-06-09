@@ -119,6 +119,11 @@ export const pagoSimpleGateway = async (
     ipAddress,
   };
 
+  console.log('──────────────────────────────────────────────────────────────');
+  console.log(`[bancardController] ► Petición entrante de frontend (action: ${action})`);
+  console.log('[bancardController] Payload:', JSON.stringify(req.body, null, 2));
+  console.log('──────────────────────────────────────────────────────────────');
+
   try {
     switch (action) {
 

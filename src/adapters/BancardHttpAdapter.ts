@@ -118,15 +118,7 @@ export class BancardHttpAdapter implements IBancardAdapter {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
     console.log('[BancardAdapter] ► single_buy REQUEST:')
     console.log('  URL Bancard:', url)
-    console.log('  Entorno:', this.strategy.getEnvironmentName())
-    console.log('  public_key:', publicKey)
-    console.log('  shop_process_id:', shopProcessId)
-    console.log('  amount:', formattedAmount)
-    console.log('  currency:', currency)
-    console.log('  description:', description.substring(0, 50))
-    console.log('  return_url:', returnUrl ?? bancardConfig.returnUrl)
-    console.log('  cancel_url:', cancelUrl ?? bancardConfig.cancelUrl)
-    console.log('  token (md5):', token)
+    console.log('  Payload crudo enviado a Bancard:', JSON.stringify(requestBody, null, 2))
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 
     const response = await this.httpClient.post<BancardRawResponse>(url, requestBody);

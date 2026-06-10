@@ -8,6 +8,8 @@
  *   get_confirmation:    md5(private_key + shop_process_id + "get_confirmation")
  *   charge_back:         md5(private_key + shop_process_id + "charge_back" + amount + currency)
  *   cards_new:           md5(private_key + card_id + user_id + "request_new_card")
+ *   charge (alias):      md5(private_key + shop_process_id + "charge" + amount + currency + alias_token)
+ *   list_user_cards:     md5(private_key + user_id + "request_user_cards")
  */
 
 import md5 from 'md5';
@@ -65,3 +67,15 @@ export const generateListCardsToken = (
   privateKey: string,
   userId: number | string,
 ): string => md5(`${privateKey}${userId}request_user_cards`);
+
+/**
+ * Genera el token de seguridad para `charge` (Pago con alias/tarjeta guardada).
+ * Fórmula: md5(private_key + shop_process_id + "charge" + amount + currency + alias_token)
+ */
+export const generateChargeToken = (
+  privateKey: string,
+  shopProcessId: number | string,
+  amount: number | string,
+  currency: string,
+  aliasToken: string,
+): string => md5(`${privateKey}${shopProcessId}charge${amount}${currency}${aliasToken}`);

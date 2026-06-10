@@ -18,12 +18,14 @@ import type {
   BancardMessage,
   BancardWebhookPayload,
   ChargeBackResult,
+  ChargeResult,
   ConfirmationResult,
   ProcessedConfirmation,
   RollbackResult,
   SingleBuyParams,
   SingleBuyResult,
   IBancardAdapter,
+  ChargeParams,
 } from '../types/bancard.types.js';
 
 // ─── Error personalizado ──────────────────────────────────────────────────────
@@ -200,6 +202,30 @@ export class BancardService {
       status: bancardResponse.status,
       messages: bancardResponse.messages ?? [],
       rawResponse: bancardResponse,
+    };
+  }
+
+  // ─── Pago con Alias (Charge) ──────────────────────────────────────────────
+
+  /**
+   * Procesa un cobro directo con una tarjeta catastrada usando su alias_token.
+   * Para débito, puede retornar un process_id para mostrar el iframe de PIN.
+   */
+  async charge(params: ChargeParams): Promise<ChargeResult> {
+    const bancardResponse = await this.adapter.charge(params);
+
+    // Para tarjetas de débito, Bancard devuelve un process_id y status 'process_pending'
+    // lo que significa que el usuario debe ingresar su PIN en el iframe.
+    const iframeUrl = bancardResponse.process_id
+      ? this.adapter.getIframeUrl(bancardResponse.process_id)
+      : undefined;
+
+    return {
+      status: bancardResponse.status,
+      confirmation: bancardResponse.confirmation ?? null,
+      messages: bancardResponse.messages ?? [],
+      rawResponse: bancardResponse,
+      iframeUrl,
     };
   }
 

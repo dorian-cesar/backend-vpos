@@ -22,6 +22,7 @@ interface BancardConfigInternal {
     chargeBack: string;
     cardsNew: string;
     usersBase: string;
+    charge: string;
   };
   readonly iframeUrl: string;
   httpTimeout: number;
@@ -63,6 +64,7 @@ const config: BancardConfigInternal = {
     chargeBack: '/vpos/api/0.3/single_buy/charge_back',
     cardsNew: '/vpos/api/0.3/cards/new',
     usersBase: '/vpos/api/0.3/users',
+    charge: '/vpos/api/0.3/charge',
   },
 
   // ─── URL del iframe (getter) ──────────────────────────────────────────────

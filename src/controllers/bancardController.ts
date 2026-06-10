@@ -222,6 +222,51 @@ export const pagoSimpleGateway = async (
         break;
       }
 
+      // ── 1.7. charge: cobrar directamente con tarjeta guardada (alias_token) ───
+      case 'charge': {
+        const { shopProcessId, amount, currency, description, aliasToken, additionalData, numberOfPayments } = req.body;
+
+        if (!shopProcessId || !amount || !description || !aliasToken) {
+          res.status(422).json({
+            status: 'error',
+            message: 'Datos de entrada inválidos.',
+            errors: [
+              ...(!shopProcessId ? [{ field: 'shopProcessId', message: 'shopProcessId es requerido para charge.' }] : []),
+              ...(!amount ? [{ field: 'amount', message: 'amount es requerido para charge.' }] : []),
+              ...(!description ? [{ field: 'description', message: 'description es requerida para charge.' }] : []),
+              ...(!aliasToken ? [{ field: 'aliasToken', message: 'aliasToken es requerido para charge.' }] : []),
+            ],
+          });
+          return;
+        }
+
+        const chargeResult = await bancardService.charge({
+          shopProcessId,
+          amount,
+          currency,
+          description,
+          aliasToken,
+          additionalData,
+          numberOfPayments,
+        });
+        result = chargeResult;
+
+        responseBody = {
+          status: chargeResult.status,
+          action,
+          message: chargeResult.status === 'success' ? 'Pago con tarjeta guardada procesado.' : 'Pago pendiente de confirmación (débito).',
+          data: {
+            shopProcessId,
+            status: chargeResult.status,
+            confirmation: chargeResult.confirmation,
+            messages: chargeResult.messages,
+            rawResponse: chargeResult.rawResponse,
+            ...(chargeResult.iframeUrl ? { iframeUrl: chargeResult.iframeUrl } : {}),
+          },
+        };
+        break;
+      }
+
       // ── 2. rollback: revertir transacción pendiente ───────────────────────
       case 'rollback': {
         const { shopProcessId } = req.body;
@@ -307,7 +352,7 @@ export const pagoSimpleGateway = async (
       default: {
         res.status(422).json({
           status: 'error',
-          message: `Acción no reconocida: "${action}". Valores válidos: single-buy, rollback, confirmation, charge-back.`,
+          message: `Acción no reconocida: "${action}". Valores válidos: single-buy, rollback, confirmation, charge-back, cards-new, list-cards, charge.`,
         });
         return;
       }

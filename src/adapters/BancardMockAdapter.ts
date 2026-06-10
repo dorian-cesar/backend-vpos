@@ -14,6 +14,7 @@ import type {
   RollbackParams,
   SingleBuyParams,
   ListCardsParams,
+  ChargeParams,
   IBancardAdapter,
 } from '../types/bancard.types.js';
 import bancardConfig from '../config/bancard.config.js';
@@ -111,9 +112,44 @@ export class BancardMockAdapter implements IBancardAdapter {
           card_masked_number: '4111********1111',
           expiration_date: '12/2030',
           card_brand: 'Visa',
-          card_type: 'Credit'
+          card_type: 'Credit',
+          alias_token: 'mock-alias-token-visa-4111'
+        },
+        {
+          card_id: 456,
+          card_masked_number: '5418********0014',
+          expiration_date: '08/2028',
+          card_brand: 'MasterCard',
+          card_type: 'Debit',
+          alias_token: 'mock-alias-token-mc-5418'
         }
       ]
+    } as unknown as BancardRawResponse;
+  }
+
+  async charge(params: ChargeParams): Promise<BancardRawResponse> {
+    await this._delay();
+    console.log(`[BancardMockAdapter] 💳 Simulando charge con alias_token: ${params.aliasToken} para shopProcessId: ${params.shopProcessId}`);
+    return {
+      status: 'success',
+      messages: [
+        {
+          key: 'ChargeSuccessful',
+          level: 'info',
+          dsc: 'Pago con tarjeta guardada exitoso (MOCK).',
+        },
+      ],
+      confirmation: {
+        shop_process_id: Number(params.shopProcessId),
+        response_code: '00',
+        response_description: 'Aprobado (MOCK)',
+        amount: Number(params.amount).toFixed(2),
+        currency: params.currency ?? 'PYG',
+        authorization_number: 'MOCK-AUTH-999',
+        ticket_number: `MOCK-${Date.now()}`,
+        card_brand: 'Visa',
+        card_masked_number: '4111********1111',
+      },
     } as unknown as BancardRawResponse;
   }
 

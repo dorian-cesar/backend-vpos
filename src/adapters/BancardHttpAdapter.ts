@@ -18,6 +18,7 @@ import {
   generateChargeBackToken,
   generateCardsNewToken,
   generateListCardsToken,
+  generateChargeToken,
 } from '../utils/tokenGenerator.js';
 import { BancardStrategy } from '../strategies/BancardStrategy.js';
 import type {
@@ -29,6 +30,7 @@ import type {
   SingleBuyParams,
   CardsNewParams,
   ListCardsParams,
+  ChargeParams,
   IBancardAdapter,
 } from '../types/bancard.types.js';
 
@@ -335,6 +337,66 @@ export class BancardHttpAdapter implements IBancardAdapter {
     const response = await this.httpClient.post<BancardRawResponse>(url, requestBody);
 
     console.log('[BancardAdapter] ◄ list_cards RESPONSE (HTTP', response.status, '):');
+    console.log(JSON.stringify(response.data, null, 2));
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+    return response.data;
+  }
+
+  // ─── charge ────────────────────────────────────────────────────────────
+
+  /**
+   * Procesa un pago directo usando una tarjeta catastrada (alias_token).
+   * Utilizado para "Pagar con tarjeta guardada" sin re-ingresar datos.
+   */
+  async charge(params: ChargeParams): Promise<BancardRawResponse> {
+    const {
+      shopProcessId,
+      amount,
+      currency = bancardConfig.defaultCurrency,
+      description,
+      aliasToken,
+      additionalData,
+      numberOfPayments = 1,
+    } = params;
+
+    const privateKey = this.strategy.getPrivateKey();
+    const publicKey = this.strategy.getPublicKey();
+    const formattedAmount = Number(amount).toFixed(2);
+    const token = generateChargeToken(privateKey, shopProcessId, formattedAmount, currency, aliasToken);
+
+    const url = this.strategy.buildEndpointUrl(bancardConfig.apiPaths.charge);
+
+    const requestBody: Record<string, any> = {
+      public_key: publicKey,
+      operation: {
+        token,
+        shop_process_id: shopProcessId,
+        amount: formattedAmount,
+        number_of_payments: numberOfPayments,
+        currency,
+        additional_data: additionalData ?? '',
+        description: description.substring(0, 50),
+        alias_token: aliasToken,
+      },
+    };
+
+    if (bancardConfig.currentEnvironment.name === 'staging') {
+      requestBody.test_client = true;
+    }
+
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('[BancardAdapter] ► charge REQUEST:');
+    console.log('  URL Bancard:', url);
+    console.log('  shop_process_id:', shopProcessId);
+    console.log('  alias_token:', aliasToken);
+    console.log('  token (md5):', token);
+    console.log('  Payload crudo enviado a Bancard:', JSON.stringify(requestBody, null, 2));
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+    const response = await this.httpClient.post<BancardRawResponse>(url, requestBody);
+
+    console.log('[BancardAdapter] ◄ charge RESPONSE (HTTP', response.status, '):');
     console.log(JSON.stringify(response.data, null, 2));
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 

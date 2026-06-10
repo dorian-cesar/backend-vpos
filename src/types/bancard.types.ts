@@ -56,6 +56,16 @@ export interface ListCardsParams {
   userId: number | string;
 }
 
+export interface ChargeParams {
+  shopProcessId: number | string;
+  amount: number | string;
+  currency?: BancardCurrency;
+  description: string;
+  aliasToken: string;
+  additionalData?: string;
+  numberOfPayments?: number;
+}
+
 // ─── Respuestas crudas de la API de Bancard ───────────────────────────────
 
 export interface BancardRawResponse {
@@ -95,6 +105,7 @@ export interface IBancardAdapter {
   chargeBack(params: ChargeBackParams): Promise<BancardRawResponse>;
   cardsNew(params: CardsNewParams): Promise<BancardRawResponse>;
   listCards(params: ListCardsParams): Promise<BancardRawResponse>;
+  charge(params: ChargeParams): Promise<BancardRawResponse>;
   getIframeUrl(processId: string): string;
   getSdkUrl(): string;
   getEnvironment(): string;
@@ -135,6 +146,15 @@ export interface ChargeBackResult {
   status: string;
   messages: BancardMessage[];
   rawResponse: BancardRawResponse;
+}
+
+export interface ChargeResult {
+  status: string;
+  confirmation?: BancardConfirmation | null;
+  messages: BancardMessage[];
+  rawResponse: BancardRawResponse;
+  /** URL del iframe para tarjetas de débito que requieren confirmación con PIN */
+  iframeUrl?: string;
 }
 
 // ─── Webhook de confirmación de Bancard ──────────────────────────────────
@@ -179,7 +199,8 @@ export type PagoSimpleAction =
   | 'confirmation'  // Consultar el estado de una transacción
   | 'charge-back'   // Devolución de un pago ya aprobado
   | 'cards-new'     // Iniciar proceso de catastro de nueva tarjeta
-  | 'list-cards';   // Listar tarjetas catastradas de un usuario
+  | 'list-cards'    // Listar tarjetas catastradas de un usuario
+  | 'charge';       // Pago con tarjeta guardada (alias_token)
 
 export interface PagoSimpleRequest {
   // ─── Discriminador (siempre requerido) ─────────────────────────────────
@@ -204,6 +225,10 @@ export interface PagoSimpleRequest {
   userId?: number;
   userCellPhone?: string;
   userMail?: string;
+
+  // ─── Campos para 'charge' (pago con alias) ───────────────────────────────────
+  aliasToken?: string;
+  numberOfPayments?: number;
 }
 
 export interface RollbackRequest {

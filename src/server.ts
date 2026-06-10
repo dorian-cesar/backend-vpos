@@ -92,11 +92,12 @@ app.listen(PORT, async () => {
   console.log('\n📋 Endpoints:');
   console.log(`   GET  ${baseUrl}/api/bancard/health`);
   console.log(`   POST ${baseUrl}/api/pagosimple`);
+  console.log(`        └─ Acciones: 'single-buy', 'rollback', 'confirmation', 'charge-back', 'cards-new', 'list-cards'`);
   console.log(`   POST ${baseUrl}/api/bancard/single-buy`);
   console.log(`   POST ${baseUrl}/api/bancard/rollback`);
   console.log(`   GET  ${baseUrl}/api/bancard/confirmation/:shopProcessId`);
   console.log(`   POST ${baseUrl}/api/bancard/charge-back`);
-  console.log(`   POST ${baseUrl}/api/bancard/confirm  ← Webhook`);
+  console.log(`   POST ${baseUrl}/confirm_payment  ← Webhook (Bancard) / Retorno (Frontend)`);
   if (process.env.SWAGGER_VISIBLE === 'true') {
     console.log(`   📚   ${baseUrl}/api-docs  ← Swagger UI`);
   }

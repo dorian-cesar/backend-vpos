@@ -26,6 +26,8 @@ import type {
   SingleBuyResult,
   IBancardAdapter,
   ChargeParams,
+  DeleteCardParams,
+  DeleteCardResult,
 } from '../types/bancard.types.js';
 
 // ─── Error personalizado ──────────────────────────────────────────────────────
@@ -226,6 +228,21 @@ export class BancardService {
       messages: bancardResponse.messages ?? [],
       rawResponse: bancardResponse,
       iframeUrl,
+    };
+  }
+
+  // ─── Eliminar Tarjeta ──────────────────────────────────────────────────────
+
+  /**
+   * Elimina una tarjeta catastrada de un usuario usando su alias_token.
+   */
+  async deleteCard(params: DeleteCardParams): Promise<DeleteCardResult> {
+    const bancardResponse = await this.adapter.deleteCard(params);
+
+    return {
+      status: bancardResponse.status,
+      messages: bancardResponse.messages ?? [],
+      rawResponse: bancardResponse,
     };
   }
 

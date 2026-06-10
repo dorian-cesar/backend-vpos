@@ -15,6 +15,7 @@ import type {
   SingleBuyParams,
   ListCardsParams,
   ChargeParams,
+  DeleteCardParams,
   IBancardAdapter,
 } from '../types/bancard.types.js';
 import bancardConfig from '../config/bancard.config.js';
@@ -150,6 +151,21 @@ export class BancardMockAdapter implements IBancardAdapter {
         card_brand: 'Visa',
         card_masked_number: '4111********1111',
       },
+    } as unknown as BancardRawResponse;
+  }
+
+  async deleteCard(params: DeleteCardParams): Promise<BancardRawResponse> {
+    await this._delay();
+    console.log(`[BancardMockAdapter] 💳 Simulando deleteCard con alias_token: ${params.aliasToken} para userId: ${params.userId}`);
+    return {
+      status: 'success',
+      messages: [
+        {
+          key: 'DeleteCardSuccessful',
+          level: 'info',
+          dsc: 'Tarjeta eliminada exitosamente (MOCK).',
+        },
+      ],
     } as unknown as BancardRawResponse;
   }
 

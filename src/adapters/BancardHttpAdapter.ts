@@ -19,6 +19,7 @@ import {
   generateCardsNewToken,
   generateListCardsToken,
   generateChargeToken,
+  generateDeleteCardToken,
 } from '../utils/tokenGenerator.js';
 import { BancardStrategy } from '../strategies/BancardStrategy.js';
 import type {
@@ -31,6 +32,7 @@ import type {
   CardsNewParams,
   ListCardsParams,
   ChargeParams,
+  DeleteCardParams,
   IBancardAdapter,
 } from '../types/bancard.types.js';
 
@@ -397,6 +399,51 @@ export class BancardHttpAdapter implements IBancardAdapter {
     const response = await this.httpClient.post<BancardRawResponse>(url, requestBody);
 
     console.log('[BancardAdapter] ◄ charge RESPONSE (HTTP', response.status, '):');
+    console.log(JSON.stringify(response.data, null, 2));
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+    return response.data;
+  }
+
+  // ─── users/:userId/cards (DELETE) ──────────────────────────────────────────
+
+  /**
+   * Elimina una tarjeta catastrada de un usuario.
+   */
+  async deleteCard(params: DeleteCardParams): Promise<BancardRawResponse> {
+    const { userId, aliasToken } = params;
+
+    const privateKey = this.strategy.getPrivateKey();
+    const publicKey = this.strategy.getPublicKey();
+    const token = generateDeleteCardToken(privateKey, userId, aliasToken);
+
+    const baseUrl = this.strategy.buildEndpointUrl(bancardConfig.apiPaths.usersBase);
+    const url = `${baseUrl}/${userId}/cards`;
+
+    const requestBody: Record<string, any> = {
+      public_key: publicKey,
+      operation: {
+        token,
+        alias_token: aliasToken,
+      },
+    };
+
+    if (bancardConfig.currentEnvironment.name === 'staging') {
+      requestBody.test_client = true;
+    }
+
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('[BancardAdapter] ► delete_card REQUEST:');
+    console.log('  URL Bancard:', url);
+    console.log('  Payload crudo enviado a Bancard:', JSON.stringify(requestBody, null, 2));
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+    // La operación DELETE puede enviar body en axios utilizando la propiedad `data` de la configuración.
+    const response = await this.httpClient.delete<BancardRawResponse>(url, {
+      data: requestBody
+    });
+
+    console.log('[BancardAdapter] ◄ delete_card RESPONSE (HTTP', response.status, '):');
     console.log(JSON.stringify(response.data, null, 2));
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 

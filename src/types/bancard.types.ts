@@ -66,6 +66,11 @@ export interface ChargeParams {
   numberOfPayments?: number;
 }
 
+export interface DeleteCardParams {
+  userId: number | string;
+  aliasToken: string;
+}
+
 // ─── Respuestas crudas de la API de Bancard ───────────────────────────────
 
 export interface BancardRawResponse {
@@ -106,6 +111,7 @@ export interface IBancardAdapter {
   cardsNew(params: CardsNewParams): Promise<BancardRawResponse>;
   listCards(params: ListCardsParams): Promise<BancardRawResponse>;
   charge(params: ChargeParams): Promise<BancardRawResponse>;
+  deleteCard(params: DeleteCardParams): Promise<BancardRawResponse>;
   getIframeUrl(processId: string): string;
   getSdkUrl(): string;
   getEnvironment(): string;
@@ -157,6 +163,12 @@ export interface ChargeResult {
   iframeUrl?: string;
 }
 
+export interface DeleteCardResult {
+  status: string;
+  messages: BancardMessage[];
+  rawResponse: BancardRawResponse;
+}
+
 // ─── Webhook de confirmación de Bancard ──────────────────────────────────
 
 export interface BancardWebhookPayload {
@@ -200,7 +212,8 @@ export type PagoSimpleAction =
   | 'charge-back'   // Devolución de un pago ya aprobado
   | 'cards-new'     // Iniciar proceso de catastro de nueva tarjeta
   | 'list-cards'    // Listar tarjetas catastradas de un usuario
-  | 'charge';       // Pago con tarjeta guardada (alias_token)
+  | 'charge'        // Pago con tarjeta guardada (alias_token)
+  | 'delete-card';  // Eliminar una tarjeta catastrada
 
 export interface PagoSimpleRequest {
   // ─── Discriminador (siempre requerido) ─────────────────────────────────

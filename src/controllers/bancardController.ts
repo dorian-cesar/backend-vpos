@@ -267,6 +267,42 @@ export const pagoSimpleGateway = async (
         break;
       }
 
+      // ── 1.8. delete-card: eliminar una tarjeta catastrada ───────────────────
+      case 'delete-card': {
+        const { userId, aliasToken } = req.body;
+
+        if (!userId || !aliasToken) {
+          res.status(422).json({
+            status: 'error',
+            message: 'Datos de entrada inválidos.',
+            errors: [
+              ...(!userId ? [{ field: 'userId', message: 'userId es requerido para delete-card.' }] : []),
+              ...(!aliasToken ? [{ field: 'aliasToken', message: 'aliasToken es requerido para delete-card.' }] : []),
+            ],
+          });
+          return;
+        }
+
+        const deleteResult = await bancardService.deleteCard({
+          userId,
+          aliasToken,
+        });
+        result = deleteResult;
+
+        responseBody = {
+          status: deleteResult.status,
+          action,
+          message: deleteResult.status === 'success' ? 'Tarjeta eliminada exitosamente.' : 'No se pudo eliminar la tarjeta.',
+          data: {
+            userId,
+            status: deleteResult.status,
+            messages: deleteResult.messages,
+            rawResponse: deleteResult.rawResponse,
+          },
+        };
+        break;
+      }
+
       // ── 2. rollback: revertir transacción pendiente ───────────────────────
       case 'rollback': {
         const { shopProcessId } = req.body;
@@ -352,7 +388,7 @@ export const pagoSimpleGateway = async (
       default: {
         res.status(422).json({
           status: 'error',
-          message: `Acción no reconocida: "${action}". Valores válidos: single-buy, rollback, confirmation, charge-back, cards-new, list-cards, charge.`,
+          message: `Acción no reconocida: "${action}". Valores válidos: single-buy, rollback, confirmation, charge-back, cards-new, list-cards, charge, delete-card.`,
         });
         return;
       }

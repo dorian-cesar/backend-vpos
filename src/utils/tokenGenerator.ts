@@ -10,6 +10,7 @@
  *   cards_new:           md5(private_key + card_id + user_id + "request_new_card")
  *   charge (alias):      md5(private_key + shop_process_id + "charge" + amount + currency + alias_token)
  *   list_user_cards:     md5(private_key + user_id + "request_user_cards")
+ *   delete_card:         md5(private_key + "delete_card" + user_id + alias_token)
  */
 
 import md5 from 'md5';
@@ -79,3 +80,13 @@ export const generateChargeToken = (
   currency: string,
   aliasToken: string,
 ): string => md5(`${privateKey}${shopProcessId}charge${amount}${currency}${aliasToken}`);
+
+/**
+ * Genera el token de seguridad para `delete_card` (Eliminar tarjeta guardada).
+ * Fórmula: md5(private_key + "delete_card" + user_id + alias_token)
+ */
+export const generateDeleteCardToken = (
+  privateKey: string,
+  userId: number | string,
+  aliasToken: string,
+): string => md5(`${privateKey}delete_card${userId}${aliasToken}`);

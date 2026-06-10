@@ -13,6 +13,7 @@ import type {
   GetConfirmationParams,
   RollbackParams,
   SingleBuyParams,
+  ListCardsParams,
   IBancardAdapter,
 } from '../types/bancard.types.js';
 import bancardConfig from '../config/bancard.config.js';
@@ -97,6 +98,23 @@ export class BancardMockAdapter implements IBancardAdapter {
       status: 'success',
       process_id: `mock_cards_new_${this._generateProcessId()}`,
     };
+  }
+
+  async listCards(params: ListCardsParams): Promise<BancardRawResponse> {
+    await this._delay();
+    console.log(`[BancardMockAdapter] 💳 Simulando listCards para userId: ${params.userId}`);
+    return {
+      status: 'success',
+      cards: [
+        {
+          card_id: 123,
+          card_masked_number: '4111********1111',
+          expiration_date: '12/2030',
+          card_brand: 'Visa',
+          card_type: 'Credit'
+        }
+      ]
+    } as unknown as BancardRawResponse;
   }
 
   getIframeUrl(processId: string): string {

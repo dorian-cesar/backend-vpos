@@ -420,8 +420,8 @@ pagoSimpleRouter.post(
   [
     body('action')
       .notEmpty().withMessage('El campo action es requerido.')
-      .isIn(['single-buy', 'rollback', 'confirmation', 'charge-back', 'cards-new'])
-      .withMessage('action debe ser: single-buy, rollback, confirmation, charge-back o cards-new.'),
+      .isIn(['single-buy', 'rollback', 'confirmation', 'charge-back', 'cards-new', 'list-cards'])
+      .withMessage('action debe ser: single-buy, rollback, confirmation, charge-back, cards-new o list-cards.'),
     servicioValidation(),
     canalValidation(),
     idValidation(),

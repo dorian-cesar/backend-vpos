@@ -57,3 +57,11 @@ export const generateCardsNewToken = (
   cardId: number | string,
   userId: number | string,
 ): string => md5(`${privateKey}${cardId}${userId}request_new_card`);
+
+/**
+ * Genera el token de seguridad para `users/:user_id/cards` (Listar Tarjetas).
+ */
+export const generateListCardsToken = (
+  privateKey: string,
+  userId: number | string,
+): string => md5(`${privateKey}${userId}request_user_cards`);

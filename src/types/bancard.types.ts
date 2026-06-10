@@ -52,6 +52,10 @@ export interface CardsNewParams {
   returnUrl?: string;
 }
 
+export interface ListCardsParams {
+  userId: number | string;
+}
+
 // ─── Respuestas crudas de la API de Bancard ───────────────────────────────
 
 export interface BancardRawResponse {
@@ -90,6 +94,7 @@ export interface IBancardAdapter {
   getConfirmation(params: GetConfirmationParams): Promise<BancardRawResponse>;
   chargeBack(params: ChargeBackParams): Promise<BancardRawResponse>;
   cardsNew(params: CardsNewParams): Promise<BancardRawResponse>;
+  listCards(params: ListCardsParams): Promise<BancardRawResponse>;
   getIframeUrl(processId: string): string;
   getSdkUrl(): string;
   getEnvironment(): string;
@@ -173,7 +178,8 @@ export type PagoSimpleAction =
   | 'rollback'      // Revertir una transacción pendiente/no confirmada
   | 'confirmation'  // Consultar el estado de una transacción
   | 'charge-back'   // Devolución de un pago ya aprobado
-  | 'cards-new';    // Iniciar proceso de catastro de nueva tarjeta
+  | 'cards-new'     // Iniciar proceso de catastro de nueva tarjeta
+  | 'list-cards';   // Listar tarjetas catastradas de un usuario
 
 export interface PagoSimpleRequest {
   // ─── Discriminador (siempre requerido) ─────────────────────────────────

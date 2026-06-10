@@ -198,6 +198,30 @@ export const pagoSimpleGateway = async (
         break;
       }
 
+      // ── 1.6. list-cards: listar tarjetas catastradas ──────────────────────
+      case 'list-cards': {
+        const { userId } = req.body;
+
+        if (!userId) {
+          res.status(422).json({
+            status: 'error',
+            message: 'Datos de entrada inválidos.',
+            errors: [{ field: 'userId', message: 'userId es requerido para list-cards.' }],
+          });
+          return;
+        }
+
+        result = await bancardService.listCards(userId);
+
+        responseBody = {
+          status: 'success',
+          action,
+          message: 'Listado de tarjetas obtenido exitosamente.',
+          data: result,
+        };
+        break;
+      }
+
       // ── 2. rollback: revertir transacción pendiente ───────────────────────
       case 'rollback': {
         const { shopProcessId } = req.body;

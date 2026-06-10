@@ -142,6 +142,16 @@ export class BancardService {
     };
   }
 
+  // ─── Listado de Tarjetas ────────────────────────────────────────────────────
+
+  /**
+   * Obtiene la lista de tarjetas catastradas de un usuario.
+   */
+  async listCards(userId: number | string): Promise<any> {
+    const bancardResponse = await this.adapter.listCards({ userId });
+    return bancardResponse;
+  }
+
   // ─── Rollback ───────────────────────────────────────────────────────────────
 
   /**

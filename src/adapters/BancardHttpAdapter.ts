@@ -17,6 +17,7 @@ import {
   generateGetConfirmationToken,
   generateChargeBackToken,
   generateCardsNewToken,
+  generateListCardsToken,
 } from '../utils/tokenGenerator.js';
 import { BancardStrategy } from '../strategies/BancardStrategy.js';
 import type {
@@ -27,6 +28,7 @@ import type {
   RollbackParams,
   SingleBuyParams,
   CardsNewParams,
+  ListCardsParams,
   IBancardAdapter,
 } from '../types/bancard.types.js';
 
@@ -290,6 +292,49 @@ export class BancardHttpAdapter implements IBancardAdapter {
     const response = await this.httpClient.post<BancardRawResponse>(url, requestBody);
 
     console.log('[BancardAdapter] ◄ cards_new RESPONSE (HTTP', response.status, '):');
+    console.log(JSON.stringify(response.data, null, 2));
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+    return response.data;
+  }
+
+  // ─── users/:userId/cards ───────────────────────────────────────────────────
+
+  /**
+   * Obtiene la lista de tarjetas catastradas de un usuario.
+   */
+  async listCards(params: ListCardsParams): Promise<BancardRawResponse> {
+    const { userId } = params;
+
+    const privateKey = this.strategy.getPrivateKey();
+    const publicKey = this.strategy.getPublicKey();
+    const token = generateListCardsToken(privateKey, userId);
+
+    // Endpoint en Bancard: /vpos/api/0.3/users/{userId}/cards
+    const baseUrl = this.strategy.buildEndpointUrl(bancardConfig.apiPaths.usersBase);
+    const url = `${baseUrl}/${userId}/cards`;
+
+    const requestBody: Record<string, any> = {
+      public_key: publicKey,
+      operation: {
+        token,
+      },
+    };
+
+    if (bancardConfig.currentEnvironment.name === 'staging') {
+      requestBody.test_client = true;
+    }
+
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('[BancardAdapter] ► list_cards REQUEST:');
+    console.log('  URL Bancard:', url);
+    console.log('  Payload crudo enviado a Bancard:', JSON.stringify(requestBody, null, 2));
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+    // List cards requires a POST request
+    const response = await this.httpClient.post<BancardRawResponse>(url, requestBody);
+
+    console.log('[BancardAdapter] ◄ list_cards RESPONSE (HTTP', response.status, '):');
     console.log(JSON.stringify(response.data, null, 2));
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 

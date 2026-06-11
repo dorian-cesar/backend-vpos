@@ -158,14 +158,14 @@ export const pagoSimpleGateway = async (
           status: 'success',
           action,
           message: 'Compra iniciada exitosamente.',
-          data: result,
+          data: result,  // ya incluye rawResponse via initiateSingleBuy
         };
         break;
       }
 
       // ── 1.5. cards-new: iniciar catastro de tarjeta ───────────────────────
       case 'cards-new': {
-        const { cardId, userId, userCellPhone, userMail, returnUrl } = req.body;
+        const { cardId, userId, userCellPhone, userMail, returnUrl, cancelUrl } = req.body;
 
         if (!cardId || !userId || !userCellPhone || !userMail) {
           res.status(422).json({
@@ -187,13 +187,14 @@ export const pagoSimpleGateway = async (
           userCellPhone,
           userMail,
           returnUrl,
+          cancelUrl,
         });
 
         responseBody = {
           status: 'success',
           action,
           message: 'Catastro de tarjeta iniciado exitosamente.',
-          data: result,
+          data: result,  // ya incluye rawResponse via initiateCardsNew
         };
         break;
       }
@@ -217,7 +218,12 @@ export const pagoSimpleGateway = async (
           status: 'success',
           action,
           message: 'Listado de tarjetas obtenido exitosamente.',
-          data: result,
+          data: {
+            userId,
+            rawResponse: result,
+            cards: (result as any)?.cards ?? [],
+            messages: (result as any)?.messages ?? [],
+          },
         };
         break;
       }
@@ -346,13 +352,20 @@ export const pagoSimpleGateway = async (
           return;
         }
 
-        result = await bancardService.getConfirmation(shopProcessId);
+        const confirmationResult = await bancardService.getConfirmation(shopProcessId);
+        result = confirmationResult;
 
         responseBody = {
           status: 'success',
           action,
           message: 'Confirmación obtenida correctamente.',
-          data: result,
+          data: {
+            shopProcessId,
+            status: confirmationResult.status,
+            confirmation: confirmationResult.confirmation,
+            messages: confirmationResult.messages,
+            rawResponse: confirmationResult.rawResponse,
+          },
         };
         break;
       }
@@ -373,13 +386,19 @@ export const pagoSimpleGateway = async (
           return;
         }
 
-        result = await bancardService.chargeBack({ shopProcessId, amount, currency });
+        const chargeBackResult = await bancardService.chargeBack({ shopProcessId, amount, currency });
+        result = chargeBackResult;
 
         responseBody = {
           status: 'success',
           action,
           message: 'Contracargo procesado correctamente.',
-          data: result,
+          data: {
+            shopProcessId,
+            status: chargeBackResult.status,
+            messages: chargeBackResult.messages,
+            rawResponse: chargeBackResult.rawResponse,
+          },
         };
         break;
       }

@@ -50,6 +50,7 @@ export interface CardsNewParams {
   userCellPhone: string;
   userMail: string;
   returnUrl?: string;
+  cancelUrl?: string;
 }
 
 export interface ListCardsParams {

@@ -23,7 +23,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"action\": \"single-buy\",\n    \"shopProcessId\": {{$randomInt}},\n    \"amount\": 25000,\n    \"currency\": \"PYG\",\n    \"description\": \"Compra de Boleto de Custodia\",\n    \"servicio\": \"boletos/custodia\",\n    \"canal\": \"totem/web/puntodeventa\",\n    \"id\": \"BOLETO-EXT-1001\"\n}"
+              "raw": "{\n    \"action\": \"single-buy\",\n    \"shopProcessId\": {{$randomInt}},\n    \"amount\": 25000,\n    \"currency\": \"PYG\",\n    \"description\": \"Compra de Boleto de Custodia\",\n    \"returnUrl\": \"https://mi-front.com/pago/exitoso\",\n    \"cancelUrl\": \"https://mi-front.com/pago/cancelado\",\n    \"servicio\": \"boletos/custodia\",\n    \"canal\": \"totem/web/puntodeventa\",\n    \"id\": \"BOLETO-EXT-1001\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/pagosimple",
@@ -119,6 +119,118 @@
               ]
             },
             "description": "Devuelve o contracarga el dinero cobrado a un cliente mediante el Gateway de Pago Simple. Registra la auditoría en la base de datos."
+          },
+          "response": []
+        },
+        {
+          "name": "1.e Catastro de Tarjeta (cards-new)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"action\": \"cards-new\",\n    \"cardId\": {{$randomInt}},\n    \"userId\": 1,\n    \"userCellPhone\": \"0981123456\",\n    \"userMail\": \"test@mail.com\",\n    \"returnUrl\": \"https://mi-front.com/catastro/exitoso\",\n    \"cancelUrl\": \"https://mi-front.com/catastro/cancelado\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/pagosimple",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pagosimple"
+              ]
+            },
+            "description": "Inicia el proceso de catastro (guardar tarjeta) para un usuario."
+          },
+          "response": []
+        },
+        {
+          "name": "1.f Listar Tarjetas (list-cards)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"action\": \"list-cards\",\n    \"userId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/pagosimple",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pagosimple"
+              ]
+            },
+            "description": "Lista todas las tarjetas catastradas asociadas a un userId."
+          },
+          "response": []
+        },
+        {
+          "name": "1.g Pagar con Alias (charge)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"action\": \"charge\",\n    \"shopProcessId\": {{$randomInt}},\n    \"amount\": 15000,\n    \"description\": \"Pago de suscripción\",\n    \"aliasToken\": \"aqui-debe-ir-un-alias-token\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/pagosimple",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pagosimple"
+              ]
+            },
+            "description": "Cobra un monto usando una tarjeta previamente guardada (vía aliasToken)."
+          },
+          "response": []
+        },
+        {
+          "name": "1.h Eliminar Tarjeta (delete-card)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"action\": \"delete-card\",\n    \"userId\": 1,\n    \"aliasToken\": \"aqui-debe-ir-un-alias-token\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/pagosimple",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pagosimple"
+              ]
+            },
+            "description": "Elimina de Bancard una tarjeta guardada de un usuario."
           },
           "response": []
         }

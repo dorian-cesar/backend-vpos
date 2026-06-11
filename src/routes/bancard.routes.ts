@@ -291,6 +291,10 @@ router.post(
  *       - `rollback`: Revertir una transacción pendiente (requiere `shopProcessId`).
  *       - `confirmation`: Consultar el estado de una transacción (requiere `shopProcessId`).
  *       - `charge-back`: Devolver un pago aprobado (requiere `shopProcessId`, `amount`).
+ *       - `cards-new`: Iniciar catastro de tarjeta (requiere `cardId`, `userId`, `userCellPhone`, `userMail`).
+ *       - `list-cards`: Listar tarjetas de un usuario (requiere `userId`).
+ *       - `charge`: Pago directo con tarjeta catastrada (requiere `shopProcessId`, `amount`, `description`, `aliasToken`).
+ *       - `delete-card`: Eliminar una tarjeta catastrada (requiere `userId`, `aliasToken`).
  *     tags: [Pago Simple — Gateway]
  *     requestBody:
  *       required: true
@@ -303,7 +307,7 @@ router.post(
  *             properties:
  *               action:
  *                 type: string
- *                 enum: [single-buy, rollback, confirmation, charge-back]
+ *                 enum: [single-buy, rollback, confirmation, charge-back, cards-new, list-cards, charge, delete-card]
  *                 example: "single-buy"
  *                 description: Operación a ejecutar. Determina qué campos adicionales son necesarios.
  *               servicio:
@@ -341,11 +345,21 @@ router.post(
  *               returnUrl:
  *                 type: string
  *                 format: uri
- *                 example: "https://midominio.com/pago/exitoso"
+ *                 example: "https://mi-front.com/pago/exitoso"
+ *                 description: |
+ *                   URL a donde Bancard redirige al usuario tras completar el pago.
+ *                   **Debe ser la URL propia del front que consume este backend.**
+ *                   Si no se envía, el backend usa el default del `.env` (`APP_BASE_URL + RETURN_URL`).
+ *                   Aplica a `single-buy` y `cards-new`.
  *               cancelUrl:
  *                 type: string
  *                 format: uri
- *                 example: "https://midominio.com/pago/cancelado"
+ *                 example: "https://mi-front.com/pago/cancelado"
+ *                 description: |
+ *                   URL a donde Bancard redirige al usuario si cancela o hay error.
+ *                   **Debe ser la URL propia del front que consume este backend.**
+ *                   Si no se envía, el backend usa el default del `.env` (`APP_BASE_URL + CANCEL_URL`).
+ *                   Aplica a `single-buy` y `cards-new`.
  *           examples:
  *             single-buy:
  *               summary: Iniciar un pago
@@ -355,6 +369,8 @@ router.post(
  *                 amount: 25000.00
  *                 currency: "PYG"
  *                 description: "Compra de Boleto"
+ *                 returnUrl: "https://mi-front.com/pago/exitoso"
+ *                 cancelUrl: "https://mi-front.com/pago/cancelado"
  *                 servicio: "boletos/custodia"
  *                 canal: "totem/web/puntodeventa"
  *             rollback:
@@ -376,6 +392,35 @@ router.post(
  *                 shopProcessId: 103
  *                 amount: 25000.00
  *                 currency: "PYG"
+ *             cards-new:
+ *               summary: Iniciar catastro de nueva tarjeta
+ *               value:
+ *                 action: "cards-new"
+ *                 cardId: 999123
+ *                 userId: 1
+ *                 userCellPhone: "0981123456"
+ *                 userMail: "test@mail.com"
+ *                 returnUrl: "https://mi-front.com/catastro/exitoso"
+ *                 cancelUrl: "https://mi-front.com/catastro/cancelado"
+ *             list-cards:
+ *               summary: Listar tarjetas de usuario
+ *               value:
+ *                 action: "list-cards"
+ *                 userId: 1
+ *             charge:
+ *               summary: Cobro con tarjeta guardada (alias)
+ *               value:
+ *                 action: "charge"
+ *                 shopProcessId: 104
+ *                 amount: 15000.00
+ *                 description: "Pago recurrente"
+ *                 aliasToken: "alias-token-valido-123"
+ *             delete-card:
+ *               summary: Eliminar tarjeta catastrada
+ *               value:
+ *                 action: "delete-card"
+ *                 userId: 1
+ *                 aliasToken: "alias-token-valido-123"
  *     responses:
  *       200:
  *         description: Operación ejecutada correctamente. La estructura de `data` varía según el `action`.

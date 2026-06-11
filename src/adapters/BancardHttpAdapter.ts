@@ -263,7 +263,7 @@ export class BancardHttpAdapter implements IBancardAdapter {
    * Inicia el proceso de catastro de una nueva tarjeta.
    */
   async cardsNew(params: CardsNewParams): Promise<BancardRawResponse> {
-    const { cardId, userId, userCellPhone, userMail, returnUrl } = params;
+    const { cardId, userId, userCellPhone, userMail, returnUrl, cancelUrl } = params;
 
     const privateKey = this.strategy.getPrivateKey();
     const publicKey = this.strategy.getPublicKey();
@@ -280,6 +280,7 @@ export class BancardHttpAdapter implements IBancardAdapter {
         user_cell_phone: userCellPhone,
         user_mail: userMail,
         return_url: returnUrl ?? bancardConfig.returnUrl,
+        cancel_url: cancelUrl ?? bancardConfig.cancelUrl,
       },
     };
 

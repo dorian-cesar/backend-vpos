@@ -9,6 +9,7 @@
 import crypto from 'crypto';
 import type {
   BancardRawResponse,
+  CardsNewParams,
   ChargeBackParams,
   GetConfirmationParams,
   RollbackParams,
@@ -93,9 +94,9 @@ export class BancardMockAdapter implements IBancardAdapter {
     };
   }
 
-  async cardsNew(params: any): Promise<BancardRawResponse> {
+  async cardsNew(params: CardsNewParams): Promise<BancardRawResponse> {
     await this._delay();
-    console.log(`[BancardMockAdapter] 💳 Simulando cardsNew para cardId: ${params.cardId}`);
+    console.log(`[BancardMockAdapter] 💳 Simulando cardsNew para cardId: ${params.cardId} | returnUrl: ${params.returnUrl ?? '(default)'} | cancelUrl: ${params.cancelUrl ?? '(default)'}`);
     return {
       status: 'success',
       process_id: `mock_cards_new_${this._generateProcessId()}`,

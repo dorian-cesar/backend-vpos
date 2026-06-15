@@ -111,6 +111,7 @@ export class BancardService {
 
     return {
       processId,
+      shopProcessId: Number(shopProcessId),
       iframeUrl: this.adapter.getIframeUrl(processId),
       sdkUrl: this.adapter.getSdkUrl(),
       status,

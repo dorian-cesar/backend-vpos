@@ -264,7 +264,7 @@ router.get('/health', healthCheck);
 router.post(
   '/single-buy',
   [
-    shopProcessIdBodyValidation(),
+    // shopProcessId se genera en el backend — no se valida del request
     amountValidation(),
     currencyValidation(),
     body('description')
@@ -470,6 +470,8 @@ pagoSimpleRouter.post(
     servicioValidation(),
     canalValidation(),
     idValidation(),
+    // processId: el process_id de Bancard, usado como referencia en rollback/confirmation/charge-back
+    body('processId').optional().isString().withMessage('processId debe ser un texto.'),
     body('currency').optional().isIn(['PYG', 'USD']).withMessage('currency debe ser PYG o USD.'),
     body('additionalData').optional().isString(),
     body('returnUrl').optional().isURL().withMessage('returnUrl debe ser una URL válida.'),

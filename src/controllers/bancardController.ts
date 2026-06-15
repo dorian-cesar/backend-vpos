@@ -17,6 +17,7 @@ import type {
   PagoSimpleRequest,
 } from '../types/bancard.types.js';
 import { PagoSimpleAudit } from '../models/PagoSimpleAudit.js';
+import { generateShopProcessId } from '../utils/shopProcessIdGenerator.js';
 
 // Singleton del servicio
 const bancardService = new BancardService();
@@ -49,8 +50,9 @@ export const initiateSingleBuy = async (
   if (!checkValidation(req, res)) return;
 
   try {
-    const { shopProcessId, amount, currency, description, additionalData, returnUrl, cancelUrl } =
-      req.body;
+    // shopProcessId se genera SIEMPRE en el backend
+    const shopProcessId = generateShopProcessId();
+    const { amount, currency, description, additionalData, returnUrl, cancelUrl } = req.body;
 
     const result = await bancardService.initiateSingleBuy({
       shopProcessId,
@@ -111,7 +113,7 @@ export const pagoSimpleGateway = async (
     externalId: id,
     servicio,
     canal,
-    shopProcessId: req.body.shopProcessId ?? 0,
+    shopProcessId: 0 as number, // Se sobrescribe en cada case con el ID generado internamente
     amount: req.body.amount ?? undefined,
     currency: req.body.currency ?? undefined,
     description: req.body.description ?? undefined,
@@ -129,20 +131,26 @@ export const pagoSimpleGateway = async (
 
       // ── 1. single-buy: iniciar una nueva compra ───────────────────────────
       case 'single-buy': {
-        const { shopProcessId, amount, currency, description, additionalData, returnUrl, cancelUrl } = req.body;
+        const { amount, currency, description, additionalData, returnUrl, cancelUrl } = req.body;
 
-        if (!shopProcessId || !amount || !description) {
+        if (!amount || !description) {
           res.status(422).json({
             status: 'error',
             message: 'Datos de entrada inválidos.',
             errors: [
-              ...(!shopProcessId ? [{ field: 'shopProcessId', message: 'shopProcessId es requerido para single-buy.' }] : []),
               ...(!amount ? [{ field: 'amount', message: 'amount es requerido para single-buy.' }] : []),
               ...(!description ? [{ field: 'description', message: 'description es requerida para single-buy.' }] : []),
             ],
           });
           return;
         }
+
+        // shopProcessId se genera SIEMPRE en el backend
+        const shopProcessId = generateShopProcessId();
+        console.log(`[bancardController] 🔑 shopProcessId generado internamente: ${shopProcessId}`);
+
+        // Actualizar auditBase con el shopProcessId real generado
+        auditBase.shopProcessId = shopProcessId;
 
         result = await bancardService.initiateSingleBuy({
           shopProcessId,
@@ -158,7 +166,7 @@ export const pagoSimpleGateway = async (
           status: 'success',
           action,
           message: 'Compra iniciada exitosamente.',
-          data: result,  // ya incluye rawResponse via initiateSingleBuy
+          data: result,  // incluye processId, shopProcessId, rawResponse, iframeUrl, sdkUrl
         };
         break;
       }
@@ -230,14 +238,13 @@ export const pagoSimpleGateway = async (
 
       // ── 1.7. charge: cobrar directamente con tarjeta guardada (alias_token) ───
       case 'charge': {
-        const { shopProcessId, amount, currency, description, aliasToken, additionalData, numberOfPayments } = req.body;
+        const { amount, currency, description, aliasToken, additionalData, numberOfPayments } = req.body;
 
-        if (!shopProcessId || !amount || !description || !aliasToken) {
+        if (!amount || !description || !aliasToken) {
           res.status(422).json({
             status: 'error',
             message: 'Datos de entrada inválidos.',
             errors: [
-              ...(!shopProcessId ? [{ field: 'shopProcessId', message: 'shopProcessId es requerido para charge.' }] : []),
               ...(!amount ? [{ field: 'amount', message: 'amount es requerido para charge.' }] : []),
               ...(!description ? [{ field: 'description', message: 'description es requerida para charge.' }] : []),
               ...(!aliasToken ? [{ field: 'aliasToken', message: 'aliasToken es requerido para charge.' }] : []),
@@ -246,8 +253,13 @@ export const pagoSimpleGateway = async (
           return;
         }
 
+        // shopProcessId también se genera en el backend para 'charge'
+        const chargeShopProcessId = generateShopProcessId();
+        console.log(`[bancardController] 🔑 shopProcessId generado para charge: ${chargeShopProcessId}`);
+        auditBase.shopProcessId = chargeShopProcessId;
+
         const chargeResult = await bancardService.charge({
-          shopProcessId,
+          shopProcessId: chargeShopProcessId,
           amount,
           currency,
           description,
@@ -262,7 +274,7 @@ export const pagoSimpleGateway = async (
           action,
           message: chargeResult.status === 'success' ? 'Pago con tarjeta guardada procesado.' : 'Pago pendiente de confirmación (débito).',
           data: {
-            shopProcessId,
+            shopProcessId: chargeShopProcessId,
             status: chargeResult.status,
             confirmation: chargeResult.confirmation,
             messages: chargeResult.messages,
@@ -311,18 +323,31 @@ export const pagoSimpleGateway = async (
 
       // ── 2. rollback: revertir transacción pendiente ───────────────────────
       case 'rollback': {
-        const { shopProcessId } = req.body;
+        const { processId } = req.body;
 
-        if (!shopProcessId) {
+        if (!processId) {
           res.status(422).json({
             status: 'error',
             message: 'Datos de entrada inválidos.',
-            errors: [{ field: 'shopProcessId', message: 'shopProcessId es requerido para rollback.' }],
+            errors: [{ field: 'processId', message: 'processId (de Bancard) es requerido para rollback.' }],
           });
           return;
         }
 
-        const rollbackResult = await bancardService.rollback(shopProcessId);
+        // Resolver shopProcessId desde la BD de auditoría
+        const rollbackShopId = await PagoSimpleAudit.lookupShopProcessId(processId);
+        if (!rollbackShopId) {
+          res.status(422).json({
+            status: 'error',
+            message: `No se encontró un shopProcessId asociado al processId "${processId}". Verifique que la transacción fue iniciada correctamente.`,
+          });
+          return;
+        }
+
+        console.log(`[bancardController] 🔍 Rollback: processId=${processId} → shopProcessId=${rollbackShopId}`);
+        auditBase.shopProcessId = rollbackShopId;
+
+        const rollbackResult = await bancardService.rollback(rollbackShopId);
         result = rollbackResult;
 
         responseBody = {
@@ -330,7 +355,7 @@ export const pagoSimpleGateway = async (
           action,
           message: rollbackResult.status === 'success' ? 'Rollback ejecutado correctamente.' : 'Error al ejecutar rollback.',
           data: {
-            shopProcessId,
+            processId,
             processed: rollbackResult.status === 'success',
             messages: rollbackResult.messages,
             rawResponse: rollbackResult.rawResponse
@@ -341,18 +366,31 @@ export const pagoSimpleGateway = async (
 
       // ── 3. confirmation: consultar estado de una transacción ──────────────
       case 'confirmation': {
-        const { shopProcessId } = req.body;
+        const { processId } = req.body;
 
-        if (!shopProcessId) {
+        if (!processId) {
           res.status(422).json({
             status: 'error',
             message: 'Datos de entrada inválidos.',
-            errors: [{ field: 'shopProcessId', message: 'shopProcessId es requerido para confirmation.' }],
+            errors: [{ field: 'processId', message: 'processId (de Bancard) es requerido para confirmation.' }],
           });
           return;
         }
 
-        const confirmationResult = await bancardService.getConfirmation(shopProcessId);
+        // Resolver shopProcessId desde la BD de auditoría
+        const confirmShopId = await PagoSimpleAudit.lookupShopProcessId(processId);
+        if (!confirmShopId) {
+          res.status(422).json({
+            status: 'error',
+            message: `No se encontró un shopProcessId asociado al processId "${processId}". Verifique que la transacción fue iniciada correctamente.`,
+          });
+          return;
+        }
+
+        console.log(`[bancardController] 🔍 Confirmation: processId=${processId} → shopProcessId=${confirmShopId}`);
+        auditBase.shopProcessId = confirmShopId;
+
+        const confirmationResult = await bancardService.getConfirmation(confirmShopId);
         result = confirmationResult;
 
         responseBody = {
@@ -360,7 +398,7 @@ export const pagoSimpleGateway = async (
           action,
           message: 'Confirmación obtenida correctamente.',
           data: {
-            shopProcessId,
+            processId,
             status: confirmationResult.status,
             confirmation: confirmationResult.confirmation,
             messages: confirmationResult.messages,
@@ -372,21 +410,34 @@ export const pagoSimpleGateway = async (
 
       // ── 4. charge-back: devolución de un pago aprobado ───────────────────
       case 'charge-back': {
-        const { shopProcessId, amount, currency } = req.body;
+        const { processId, amount, currency } = req.body;
 
-        if (!shopProcessId || !amount) {
+        if (!processId || !amount) {
           res.status(422).json({
             status: 'error',
             message: 'Datos de entrada inválidos.',
             errors: [
-              ...(!shopProcessId ? [{ field: 'shopProcessId', message: 'shopProcessId es requerido para charge-back.' }] : []),
+              ...(!processId ? [{ field: 'processId', message: 'processId (de Bancard) es requerido para charge-back.' }] : []),
               ...(!amount ? [{ field: 'amount', message: 'amount es requerido para charge-back.' }] : []),
             ],
           });
           return;
         }
 
-        const chargeBackResult = await bancardService.chargeBack({ shopProcessId, amount, currency });
+        // Resolver shopProcessId desde la BD de auditoría
+        const chargeBackShopId = await PagoSimpleAudit.lookupShopProcessId(processId);
+        if (!chargeBackShopId) {
+          res.status(422).json({
+            status: 'error',
+            message: `No se encontró un shopProcessId asociado al processId "${processId}". Verifique que la transacción fue iniciada correctamente.`,
+          });
+          return;
+        }
+
+        console.log(`[bancardController] 🔍 Charge-back: processId=${processId} → shopProcessId=${chargeBackShopId}`);
+        auditBase.shopProcessId = chargeBackShopId;
+
+        const chargeBackResult = await bancardService.chargeBack({ shopProcessId: chargeBackShopId, amount, currency });
         result = chargeBackResult;
 
         responseBody = {
@@ -394,7 +445,7 @@ export const pagoSimpleGateway = async (
           action,
           message: 'Contracargo procesado correctamente.',
           data: {
-            shopProcessId,
+            processId,
             status: chargeBackResult.status,
             messages: chargeBackResult.messages,
             rawResponse: chargeBackResult.rawResponse,

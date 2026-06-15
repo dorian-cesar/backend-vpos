@@ -47,6 +47,37 @@ export class PagoSimpleAudit {
    * Guarda el registro de auditoría unificado en MySQL.
    * No lanza excepción para no interrumpir el flujo.
    */
+  /**
+   * Resuelve el shop_process_id interno a partir del process_id de Bancard.
+   * Se usa para que el frontend envíe solo el processId (de Bancard) en
+   * rollback / confirmation / charge-back, y el backend resuelva el ID interno.
+   *
+   * @param bancardProcessId - El process_id retornado por Bancard en single-buy.
+   * @returns El shop_process_id correspondiente, o null si no se encuentra.
+   */
+  static async lookupShopProcessId(bancardProcessId: string): Promise<number | null> {
+    try {
+      const [rows] = await dbPool.query(
+        `SELECT shop_process_id
+           FROM pago_simple_audits
+          WHERE bancard_process_id = ?
+            AND action = 'single-buy'
+          ORDER BY created_at DESC
+          LIMIT 1`,
+        [bancardProcessId],
+      ) as [Array<{ shop_process_id: string | null }>, unknown];
+
+      const row = rows[0];
+      if (!row?.shop_process_id) return null;
+
+      const parsed = parseInt(String(row.shop_process_id), 10);
+      return isNaN(parsed) ? null : parsed;
+    } catch (error) {
+      console.error('[PagoSimpleAudit] ❌ Error al resolver shopProcessId por processId:', error);
+      return null;
+    }
+  }
+
   static async saveAuditLog(data: {
     action?: string;
     externalId?: string;

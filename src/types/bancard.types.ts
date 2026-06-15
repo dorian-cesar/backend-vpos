@@ -122,6 +122,7 @@ export interface IBancardAdapter {
 
 export interface SingleBuyResult {
   processId: string;
+  shopProcessId: number;
   iframeUrl: string;
   sdkUrl: string;
   status: string;
@@ -195,7 +196,7 @@ export interface ProcessedConfirmation {
 // ─── Requests HTTP ────────────────────────────────────────────────────────
 
 export interface SingleBuyRequest {
-  shopProcessId: number;
+  // shopProcessId es generado internamente por el backend — NO enviado por el frontend
   amount: number;
   currency?: BancardCurrency;
   description: string;
@@ -225,8 +226,15 @@ export interface PagoSimpleRequest {
   canal?: string;
   id?: string;
 
-  // ─── Campos para 'single-buy' y 'charge-back' ──────────────────────────
-  shopProcessId?: number;
+  // ─── Referencia de sesión de pago Bancard ───────────────────────────────
+  // El frontend NUNCA envía shopProcessId (lo genera el backend).
+  // Para rollback / confirmation / charge-back el frontend envía processId
+  // (el process_id de Bancard retornado por single-buy) y el backend resuelve
+  // internamente el shopProcessId desde su tabla de auditoría.
+  processId?: string;    // process_id de Bancard — usado en rollback/confirmation/charge-back
+
+  // ─── Campos para 'single-buy' ──────────────────────────────────────────
+  // shopProcessId NO se acepta del frontend — se genera en el backend.
   amount?: number;
   currency?: BancardCurrency;
   description?: string;
@@ -234,13 +242,17 @@ export interface PagoSimpleRequest {
   returnUrl?: string;
   cancelUrl?: string;
 
+  // ─── Campos para 'charge-back' (requiere amount además de processId) ───
+  // amount ya está definido arriba
+
   // ─── Campos para 'cards-new' ──────────────────────────────────────────
   cardId?: number;
   userId?: number;
   userCellPhone?: string;
   userMail?: string;
 
-  // ─── Campos para 'charge' (pago con alias) ───────────────────────────────────
+  // ─── Campos para 'charge' (pago con alias) ─────────────────────────────
+  // shopProcessId también se genera internamente para 'charge'
   aliasToken?: string;
   numberOfPayments?: number;
 }

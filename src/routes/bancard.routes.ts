@@ -206,13 +206,9 @@ router.get('/health', healthCheck);
  *           schema:
  *             type: object
  *             required:
- *               - shopProcessId
  *               - amount
  *               - description
  *             properties:
- *               shopProcessId:
- *                 type: integer
- *                 example: 102
  *               amount:
  *                 type: number
  *                 example: 25000.00
@@ -287,13 +283,13 @@ router.post(
  *       Todos los requests quedan registrados en la auditoría de MySQL.
  *
  *       **Acciones disponibles:**
- *       - `single-buy`: Iniciar un nuevo pago (requiere `shopProcessId`, `amount`, `description`).
- *       - `rollback`: Revertir una transacción pendiente (requiere `shopProcessId`).
- *       - `confirmation`: Consultar el estado de una transacción (requiere `shopProcessId`).
- *       - `charge-back`: Devolver un pago aprobado (requiere `shopProcessId`, `amount`).
+ *       - `single-buy`: Iniciar un nuevo pago (requiere `amount`, `description`).
+ *       - `rollback`: Revertir una transacción pendiente (requiere `processId`).
+ *       - `confirmation`: Consultar el estado de una transacción (requiere `processId`).
+ *       - `charge-back`: Devolver un pago aprobado (requiere `processId`, `amount`).
  *       - `cards-new`: Iniciar catastro de tarjeta (requiere `cardId`, `userId`, `userCellPhone`, `userMail`).
  *       - `list-cards`: Listar tarjetas de un usuario (requiere `userId`).
- *       - `charge`: Pago directo con tarjeta catastrada (requiere `shopProcessId`, `amount`, `description`, `aliasToken`).
+ *       - `charge`: Pago directo con tarjeta catastrada (requiere `amount`, `description`, `aliasToken`).
  *       - `delete-card`: Eliminar una tarjeta catastrada (requiere `userId`, `aliasToken`).
  *     tags: [Pago Simple — Gateway]
  *     requestBody:
@@ -322,10 +318,10 @@ router.post(
  *                 type: string
  *                 example: "ref-externo-123"
  *                 description: ID externo de referencia para auditoría (opcional).
- *               shopProcessId:
- *                 type: integer
- *                 example: 103
- *                 description: Requerido para single-buy, rollback, confirmation y charge-back.
+ *               processId:
+ *                 type: string
+ *                 example: "aBcD1234"
+ *                 description: ID de proceso de Bancard. Requerido para rollback, confirmation y charge-back.
  *               amount:
  *                 type: number
  *                 example: 25000.00
@@ -365,7 +361,6 @@ router.post(
  *               summary: Iniciar un pago
  *               value:
  *                 action: "single-buy"
- *                 shopProcessId: 103
  *                 amount: 25000.00
  *                 currency: "PYG"
  *                 description: "Compra de Boleto"
@@ -377,19 +372,19 @@ router.post(
  *               summary: Revertir una transacción
  *               value:
  *                 action: "rollback"
- *                 shopProcessId: 103
+ *                 processId: "aBcD1234"
  *                 servicio: "boletos/custodia"
  *                 canal: "totem"
  *             confirmation:
  *               summary: Consultar estado de una transacción
  *               value:
  *                 action: "confirmation"
- *                 shopProcessId: 103
+ *                 processId: "aBcD1234"
  *             charge-back:
  *               summary: Devolución de pago aprobado
  *               value:
  *                 action: "charge-back"
- *                 shopProcessId: 103
+ *                 processId: "aBcD1234"
  *                 amount: 25000.00
  *                 currency: "PYG"
  *             cards-new:
@@ -411,7 +406,6 @@ router.post(
  *               summary: Cobro con tarjeta guardada (alias)
  *               value:
  *                 action: "charge"
- *                 shopProcessId: 104
  *                 amount: 15000.00
  *                 description: "Pago recurrente"
  *                 aliasToken: "alias-token-valido-123"

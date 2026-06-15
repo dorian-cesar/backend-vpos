@@ -23,7 +23,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"action\": \"single-buy\",\n    \"shopProcessId\": {{$randomInt}},\n    \"amount\": 25000,\n    \"currency\": \"PYG\",\n    \"description\": \"Compra de Boleto de Custodia\",\n    \"returnUrl\": \"https://mi-front.com/pago/exitoso\",\n    \"cancelUrl\": \"https://mi-front.com/pago/cancelado\",\n    \"servicio\": \"boletos/custodia\",\n    \"canal\": \"totem/web/puntodeventa\",\n    \"id\": \"BOLETO-EXT-1001\"\n}"
+              "raw": "{\n    \"action\": \"single-buy\",\n    \"amount\": 25000,\n    \"currency\": \"PYG\",\n    \"description\": \"Compra de Boleto de Custodia\",\n    \"returnUrl\": \"https://mi-front.com/pago/exitoso\",\n    \"cancelUrl\": \"https://mi-front.com/pago/cancelado\",\n    \"servicio\": \"boletos/custodia\",\n    \"canal\": \"totem/web/puntodeventa\",\n    \"id\": \"BOLETO-EXT-1001\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/pagosimple",
@@ -51,7 +51,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"action\": \"rollback\",\n    \"shopProcessId\": 103,\n    \"servicio\": \"boletos/custodia\",\n    \"canal\": \"totem/web/puntodeventa\",\n    \"id\": \"BOLETO-EXT-1001\"\n}"
+              "raw": "{\n    \"action\": \"rollback\",\n    \"processId\": \"aBcD1234\",\n    \"servicio\": \"boletos/custodia\",\n    \"canal\": \"totem/web/puntodeventa\",\n    \"id\": \"BOLETO-EXT-1001\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/pagosimple",
@@ -79,7 +79,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"action\": \"confirmation\",\n    \"shopProcessId\": 103,\n    \"servicio\": \"boletos/custodia\",\n    \"canal\": \"totem/web/puntodeventa\",\n    \"id\": \"BOLETO-EXT-1001\"\n}"
+              "raw": "{\n    \"action\": \"confirmation\",\n    \"processId\": \"aBcD1234\",\n    \"servicio\": \"boletos/custodia\",\n    \"canal\": \"totem/web/puntodeventa\",\n    \"id\": \"BOLETO-EXT-1001\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/pagosimple",
@@ -107,7 +107,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"action\": \"charge-back\",\n    \"shopProcessId\": 103,\n    \"amount\": 25000,\n    \"currency\": \"PYG\",\n    \"servicio\": \"boletos/custodia\",\n    \"canal\": \"totem/web/puntodeventa\",\n    \"id\": \"BOLETO-EXT-1001\"\n}"
+              "raw": "{\n    \"action\": \"charge-back\",\n    \"processId\": \"aBcD1234\",\n    \"amount\": 25000,\n    \"currency\": \"PYG\",\n    \"servicio\": \"boletos/custodia\",\n    \"canal\": \"totem/web/puntodeventa\",\n    \"id\": \"BOLETO-EXT-1001\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/pagosimple",
@@ -191,7 +191,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"action\": \"charge\",\n    \"shopProcessId\": {{$randomInt}},\n    \"amount\": 15000,\n    \"description\": \"Pago de suscripción\",\n    \"aliasToken\": \"aqui-debe-ir-un-alias-token\"\n}"
+              "raw": "{\n    \"action\": \"charge\",\n    \"amount\": 15000,\n    \"description\": \"Pago de suscripción\",\n    \"aliasToken\": \"aqui-debe-ir-un-alias-token\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/pagosimple",

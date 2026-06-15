@@ -20,11 +20,30 @@ export interface BancardEnvironment {
 
 // ─── Parámetros de operaciones ────────────────────────────────────────────
 
+export interface BancardBillingDetail {
+  description: string;
+  amount: number | string;
+  iva_rate: number | string;
+  total_items: number | string;
+}
+
+export interface BancardBilling {
+  client_ruc: string;
+  client_name?: string;
+  client_email?: string;
+  commerce_stamp?: string;
+  commerce_expedition_point?: string;
+  commerce_establishment?: string;
+  details: BancardBillingDetail[];
+}
+
 export interface SingleBuyParams {
   shopProcessId: number | string;
   amount: number | string;
   currency?: BancardCurrency;
   description: string;
+  ivaAmount?: number | string;
+  billing?: BancardBilling;
   additionalData?: string;
   returnUrl?: string;
   cancelUrl?: string;
@@ -72,6 +91,11 @@ export interface DeleteCardParams {
   aliasToken: string;
 }
 
+export interface CancelBillingParams {
+  shopProcessId: number | string;
+  clientRuc: string;
+}
+
 // ─── Respuestas crudas de la API de Bancard ───────────────────────────────
 
 export interface BancardRawResponse {
@@ -113,6 +137,7 @@ export interface IBancardAdapter {
   listCards(params: ListCardsParams): Promise<BancardRawResponse>;
   charge(params: ChargeParams): Promise<BancardRawResponse>;
   deleteCard(params: DeleteCardParams): Promise<BancardRawResponse>;
+  cancelBilling(params: CancelBillingParams): Promise<BancardRawResponse>;
   getIframeUrl(processId: string): string;
   getSdkUrl(): string;
   getEnvironment(): string;
@@ -171,6 +196,12 @@ export interface DeleteCardResult {
   rawResponse: BancardRawResponse;
 }
 
+export interface CancelBillingResult {
+  status: string;
+  messages: BancardMessage[];
+  rawResponse: BancardRawResponse;
+}
+
 // ─── Webhook de confirmación de Bancard ──────────────────────────────────
 
 export interface BancardWebhookPayload {
@@ -200,6 +231,8 @@ export interface SingleBuyRequest {
   amount: number;
   currency?: BancardCurrency;
   description: string;
+  ivaAmount?: number;
+  billing?: BancardBilling;
   additionalData?: string;
   returnUrl?: string;
   cancelUrl?: string;
@@ -215,7 +248,8 @@ export type PagoSimpleAction =
   | 'cards-new'     // Iniciar proceso de catastro de nueva tarjeta
   | 'list-cards'    // Listar tarjetas catastradas de un usuario
   | 'charge'        // Pago con tarjeta guardada (alias_token)
-  | 'delete-card';  // Eliminar una tarjeta catastrada
+  | 'delete-card'   // Eliminar una tarjeta catastrada
+  | 'cancel-billing';// Cancelar factura electrónica
 
 export interface PagoSimpleRequest {
   // ─── Discriminador (siempre requerido) ─────────────────────────────────
@@ -238,9 +272,14 @@ export interface PagoSimpleRequest {
   amount?: number;
   currency?: BancardCurrency;
   description?: string;
+  ivaAmount?: number;
+  billing?: BancardBilling;
   additionalData?: string;
   returnUrl?: string;
   cancelUrl?: string;
+
+  // ─── Campos para 'cancel-billing' ──────────────────────────────────────
+  clientRuc?: string;
 
   // ─── Campos para 'charge-back' (requiere amount además de processId) ───
   // amount ya está definido arriba

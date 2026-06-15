@@ -90,3 +90,12 @@ export const generateDeleteCardToken = (
   userId: number | string,
   aliasToken: string,
 ): string => md5(`${privateKey}delete_card${userId}${aliasToken}`);
+
+/**
+ * Genera el token de seguridad para `billing/cancel` (Cancelar Factura Electrónica).
+ * Fórmula: md5(private_key + shop_process_id + "billing_cancel")
+ */
+export const generateCancelBillingToken = (
+  privateKey: string,
+  shopProcessId: number | string,
+): string => md5(`${privateKey}${shopProcessId}billing_cancel`);

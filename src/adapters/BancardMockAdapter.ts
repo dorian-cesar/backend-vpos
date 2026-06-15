@@ -17,6 +17,7 @@ import type {
   ListCardsParams,
   ChargeParams,
   DeleteCardParams,
+  CancelBillingParams,
   IBancardAdapter,
 } from '../types/bancard.types.js';
 import bancardConfig from '../config/bancard.config.js';
@@ -165,6 +166,21 @@ export class BancardMockAdapter implements IBancardAdapter {
           key: 'DeleteCardSuccessful',
           level: 'info',
           dsc: 'Tarjeta eliminada exitosamente (MOCK).',
+        },
+      ],
+    } as unknown as BancardRawResponse;
+  }
+
+  async cancelBilling(params: CancelBillingParams): Promise<BancardRawResponse> {
+    await this._delay();
+    console.log(`[BancardMockAdapter] 📄 Simulando cancelBilling para shopProcessId: ${params.shopProcessId} y clientRuc: ${params.clientRuc}`);
+    return {
+      status: 'success',
+      messages: [
+        {
+          key: 'CancelInvoiceSuccessful',
+          level: 'info',
+          dsc: 'Cancelación correcta de factura electrónica. (MOCK)',
         },
       ],
     } as unknown as BancardRawResponse;

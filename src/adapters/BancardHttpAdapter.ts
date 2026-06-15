@@ -20,6 +20,7 @@ import {
   generateListCardsToken,
   generateChargeToken,
   generateDeleteCardToken,
+  generateCancelBillingToken,
 } from '../utils/tokenGenerator.js';
 import { BancardStrategy } from '../strategies/BancardStrategy.js';
 import type {
@@ -33,6 +34,7 @@ import type {
   ListCardsParams,
   ChargeParams,
   DeleteCardParams,
+  CancelBillingParams,
   IBancardAdapter,
 } from '../types/bancard.types.js';
 
@@ -97,6 +99,8 @@ export class BancardHttpAdapter implements IBancardAdapter {
       amount,
       currency = bancardConfig.defaultCurrency,
       description,
+      ivaAmount,
+      billing,
       additionalData,
       returnUrl,
       cancelUrl,
@@ -116,10 +120,22 @@ export class BancardHttpAdapter implements IBancardAdapter {
         shop_process_id: shopProcessId,
         currency,
         amount: formattedAmount,
+        ...(ivaAmount !== undefined && { iva_amount: Number(ivaAmount).toFixed(2) }),
         additional_data: additionalData ?? '',
         description: description.substring(0, 50),
         return_url: returnUrl ?? bancardConfig.returnUrl,
         cancel_url: cancelUrl ?? bancardConfig.cancelUrl,
+        ...(billing && {
+          billing: {
+            ...billing,
+            details: billing.details.map(detail => ({
+              ...detail,
+              amount: Number(detail.amount).toFixed(2),
+              iva_rate: Number(detail.iva_rate),
+              total_items: Number(detail.total_items),
+            }))
+          }
+        }),
       },
     };
 
@@ -445,6 +461,48 @@ export class BancardHttpAdapter implements IBancardAdapter {
     });
 
     console.log('[BancardAdapter] ◄ delete_card RESPONSE (HTTP', response.status, '):');
+    console.log(JSON.stringify(response.data, null, 2));
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+    return response.data;
+  }
+
+  // ─── billing/cancel ────────────────────────────────────────────────────────
+
+  /**
+   * Cancela una factura electrónica generada.
+   */
+  async cancelBilling(params: CancelBillingParams): Promise<BancardRawResponse> {
+    const { shopProcessId, clientRuc } = params;
+
+    const privateKey = this.strategy.getPrivateKey();
+    const publicKey = this.strategy.getPublicKey();
+    const token = generateCancelBillingToken(privateKey, shopProcessId);
+
+    const url = this.strategy.buildEndpointUrl(bancardConfig.apiPaths.cancelBilling);
+
+    const requestBody: Record<string, any> = {
+      public_key: publicKey,
+      operation: {
+        token,
+        shop_process_id: shopProcessId,
+        client_ruc: clientRuc,
+      },
+    };
+
+    if (bancardConfig.currentEnvironment.name === 'staging') {
+      requestBody.test_client = true;
+    }
+
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('[BancardAdapter] ► billing_cancel REQUEST:');
+    console.log('  URL Bancard:', url);
+    console.log('  Payload crudo enviado a Bancard:', JSON.stringify(requestBody, null, 2));
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+    const response = await this.httpClient.post<BancardRawResponse>(url, requestBody);
+
+    console.log('[BancardAdapter] ◄ billing_cancel RESPONSE (HTTP', response.status, '):');
     console.log(JSON.stringify(response.data, null, 2));
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 

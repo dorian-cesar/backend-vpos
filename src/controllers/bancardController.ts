@@ -52,13 +52,15 @@ export const initiateSingleBuy = async (
   try {
     // shopProcessId se genera SIEMPRE en el backend
     const shopProcessId = generateShopProcessId();
-    const { amount, currency, description, additionalData, returnUrl, cancelUrl } = req.body;
+    const { amount, currency, description, ivaAmount, billing, additionalData, returnUrl, cancelUrl } = req.body;
 
     const result = await bancardService.initiateSingleBuy({
       shopProcessId,
       amount,
       currency,
       description,
+      ivaAmount,
+      billing,
       additionalData,
       returnUrl,
       cancelUrl,
@@ -131,7 +133,7 @@ export const pagoSimpleGateway = async (
 
       // ── 1. single-buy: iniciar una nueva compra ───────────────────────────
       case 'single-buy': {
-        const { amount, currency, description, additionalData, returnUrl, cancelUrl } = req.body;
+        const { amount, currency, description, ivaAmount, billing, additionalData, returnUrl, cancelUrl } = req.body;
 
         if (!amount || !description) {
           res.status(422).json({
@@ -157,6 +159,8 @@ export const pagoSimpleGateway = async (
           amount,
           currency,
           description,
+          ivaAmount,
+          billing,
           additionalData,
           returnUrl,
           cancelUrl,
@@ -356,6 +360,7 @@ export const pagoSimpleGateway = async (
           message: rollbackResult.status === 'success' ? 'Rollback ejecutado correctamente.' : 'Error al ejecutar rollback.',
           data: {
             processId,
+            shopProcessId: rollbackShopId,
             processed: rollbackResult.status === 'success',
             messages: rollbackResult.messages,
             rawResponse: rollbackResult.rawResponse
@@ -399,6 +404,7 @@ export const pagoSimpleGateway = async (
           message: 'Confirmación obtenida correctamente.',
           data: {
             processId,
+            shopProcessId: confirmShopId,
             status: confirmationResult.status,
             confirmation: confirmationResult.confirmation,
             messages: confirmationResult.messages,
@@ -446,9 +452,57 @@ export const pagoSimpleGateway = async (
           message: 'Contracargo procesado correctamente.',
           data: {
             processId,
+            shopProcessId: chargeBackShopId,
             status: chargeBackResult.status,
             messages: chargeBackResult.messages,
             rawResponse: chargeBackResult.rawResponse,
+          },
+        };
+        break;
+      }
+
+      // ── 5. cancel-billing: cancelar una factura electrónica generada ──────
+      case 'cancel-billing': {
+        const { processId, clientRuc } = req.body;
+
+        if (!processId || !clientRuc) {
+          res.status(422).json({
+            status: 'error',
+            message: 'Datos de entrada inválidos.',
+            errors: [
+              ...(!processId ? [{ field: 'processId', message: 'processId es requerido para cancel-billing.' }] : []),
+              ...(!clientRuc ? [{ field: 'clientRuc', message: 'clientRuc es requerido para cancel-billing.' }] : []),
+            ],
+          });
+          return;
+        }
+
+        // Resolver shopProcessId desde la BD de auditoría
+        const cancelBillingShopId = await PagoSimpleAudit.lookupShopProcessId(processId);
+        if (!cancelBillingShopId) {
+          res.status(422).json({
+            status: 'error',
+            message: `No se encontró un shopProcessId asociado al processId "${processId}". Verifique que la transacción fue iniciada correctamente.`,
+          });
+          return;
+        }
+
+        console.log(`[bancardController] 🔍 Cancel-billing: processId=${processId} → shopProcessId=${cancelBillingShopId}`);
+        auditBase.shopProcessId = cancelBillingShopId;
+
+        const cancelBillingResult = await bancardService.cancelBilling({ shopProcessId: cancelBillingShopId, clientRuc });
+        result = cancelBillingResult;
+
+        responseBody = {
+          status: cancelBillingResult.status,
+          action,
+          message: cancelBillingResult.status === 'success' ? 'Factura electrónica cancelada exitosamente.' : 'Error al cancelar la factura electrónica.',
+          data: {
+            processId,
+            shopProcessId: cancelBillingShopId,
+            status: cancelBillingResult.status,
+            messages: cancelBillingResult.messages,
+            rawResponse: cancelBillingResult.rawResponse,
           },
         };
         break;
@@ -458,7 +512,7 @@ export const pagoSimpleGateway = async (
       default: {
         res.status(422).json({
           status: 'error',
-          message: `Acción no reconocida: "${action}". Valores válidos: single-buy, rollback, confirmation, charge-back, cards-new, list-cards, charge, delete-card.`,
+          message: `Acción no reconocida: "${action}". Valores válidos: single-buy, rollback, confirmation, charge-back, cards-new, list-cards, charge, delete-card, cancel-billing.`,
         });
         return;
       }

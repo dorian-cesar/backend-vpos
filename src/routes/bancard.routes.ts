@@ -303,7 +303,7 @@ router.post(
  *             properties:
  *               action:
  *                 type: string
- *                 enum: [single-buy, rollback, confirmation, charge-back, cards-new, list-cards, charge, delete-card]
+ *                 enum: [single-buy, rollback, confirmation, charge-back, cards-new, list-cards, charge, delete-card, cancel-billing]
  *                 example: "single-buy"
  *                 description: Operación a ejecutar. Determina qué campos adicionales son necesarios.
  *               servicio:
@@ -335,6 +335,17 @@ router.post(
  *                 maxLength: 50
  *                 example: "Compra de Boleto"
  *                 description: Requerido solo para single-buy.
+ *               ivaAmount:
+ *                 type: number
+ *                 example: 1033.00
+ *                 description: Opcional. Monto del IVA de la factura.
+ *               billing:
+ *                 type: object
+ *                 description: Opcional. Información para Factura Electrónica.
+ *               clientRuc:
+ *                 type: string
+ *                 example: "123456-1"
+ *                 description: Requerido para cancel-billing.
  *               additionalData:
  *                 type: string
  *                 example: "Datos adicionales"
@@ -364,6 +375,16 @@ router.post(
  *                 amount: 25000.00
  *                 currency: "PYG"
  *                 description: "Compra de Boleto"
+ *                 ivaAmount: 2500.00
+ *                 billing:
+ *                   client_ruc: "123456-1"
+ *                   client_name: "JUAN GONZALEZ"
+ *                   client_email: "juan@mail.com"
+ *                   details:
+ *                     - description: "Boleto 1"
+ *                       amount: 25000.00
+ *                       iva_rate: 10
+ *                       total_items: 1
  *                 returnUrl: "https://mi-front.com/pago/exitoso"
  *                 cancelUrl: "https://mi-front.com/pago/cancelado"
  *                 servicio: "boletos/custodia"
@@ -415,6 +436,12 @@ router.post(
  *                 action: "delete-card"
  *                 userId: 1
  *                 aliasToken: "alias-token-valido-123"
+ *             cancel-billing:
+ *               summary: Cancelar factura electrónica
+ *               value:
+ *                 action: "cancel-billing"
+ *                 processId: "aBcD1234"
+ *                 clientRuc: "123456-1"
  *     responses:
  *       200:
  *         description: Operación ejecutada correctamente. La estructura de `data` varía según el `action`.
@@ -459,8 +486,8 @@ pagoSimpleRouter.post(
   [
     body('action')
       .notEmpty().withMessage('El campo action es requerido.')
-      .isIn(['single-buy', 'rollback', 'confirmation', 'charge-back', 'cards-new', 'list-cards', 'charge', 'delete-card'])
-      .withMessage('action debe ser: single-buy, rollback, confirmation, charge-back, cards-new, list-cards, charge o delete-card.'),
+      .isIn(['single-buy', 'rollback', 'confirmation', 'charge-back', 'cards-new', 'list-cards', 'charge', 'delete-card', 'cancel-billing'])
+      .withMessage('action debe ser: single-buy, rollback, confirmation, charge-back, cards-new, list-cards, charge, delete-card o cancel-billing.'),
     servicioValidation(),
     canalValidation(),
     idValidation(),

@@ -28,6 +28,8 @@ import type {
   ChargeParams,
   DeleteCardParams,
   DeleteCardResult,
+  CancelBillingParams,
+  CancelBillingResult,
 } from '../types/bancard.types.js';
 
 // ─── Error personalizado ──────────────────────────────────────────────────────
@@ -83,6 +85,8 @@ export class BancardService {
       amount,
       currency = bancardConfig.defaultCurrency as BancardCurrency,
       description,
+      ivaAmount,
+      billing,
       additionalData,
       returnUrl,
       cancelUrl,
@@ -93,6 +97,8 @@ export class BancardService {
       amount,
       currency,
       description,
+      ivaAmount,
+      billing,
       additionalData,
       returnUrl,
       cancelUrl,
@@ -239,6 +245,21 @@ export class BancardService {
    */
   async deleteCard(params: DeleteCardParams): Promise<DeleteCardResult> {
     const bancardResponse = await this.adapter.deleteCard(params);
+
+    return {
+      status: bancardResponse.status,
+      messages: bancardResponse.messages ?? [],
+      rawResponse: bancardResponse,
+    };
+  }
+
+  // ─── Factura Electrónica (Cancelación) ──────────────────────────────────────
+
+  /**
+   * Cancela una factura electrónica previamente generada.
+   */
+  async cancelBilling(params: CancelBillingParams): Promise<CancelBillingResult> {
+    const bancardResponse = await this.adapter.cancelBilling(params);
 
     return {
       status: bancardResponse.status,

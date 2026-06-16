@@ -451,6 +451,7 @@ export const pagoSimpleGateway = async (
               electronicBillCdc: confirmationResult.confirmation.vpos_electronic_bill?.cdc,
             } : null,
             messages: confirmationResult.messages,
+            rawResponse: confirmationResult.rawResponse,
           },
         };
         break;
@@ -760,6 +761,7 @@ export const getConfirmation = async (
         electronicBillCdc: result.confirmation.vpos_electronic_bill?.cdc,
       } : null,
       messages: result.messages,
+      rawResponse: result.rawResponse,
     };
 
     const body: ApiSuccessResponse<typeof mappedData> = {

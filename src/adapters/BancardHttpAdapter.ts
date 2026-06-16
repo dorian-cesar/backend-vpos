@@ -132,6 +132,9 @@ export class BancardHttpAdapter implements IBancardAdapter {
         ...(billing && {
           billing: {
             ...billing,
+            commerce_stamp: bancardConfig.commerce.stamp,
+            commerce_expedition_point: bancardConfig.commerce.expeditionPoint,
+            commerce_establishment: bancardConfig.commerce.establishment,
             details: billing.details.map(detail => ({
               ...detail,
               amount: Number(detail.amount).toFixed(2),

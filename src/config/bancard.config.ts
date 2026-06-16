@@ -33,6 +33,11 @@ interface BancardConfigInternal {
   appUrl: string;
   returnUrl: string;
   cancelUrl: string;
+  commerce: {
+    stamp: string;
+    expeditionPoint: string;
+    establishment: string;
+  };
 }
 
 const config: BancardConfigInternal = {
@@ -95,6 +100,13 @@ const config: BancardConfigInternal = {
   get cancelUrl(): string {
     const url = process.env.CANCEL_URL ?? '/api/bancard/cancel';
     return url.startsWith('http') ? url : `${this.appUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+  },
+
+  // ─── Timbrado y datos de comercio (Facturación Electrónica) ───────────────
+  commerce: {
+    stamp: process.env.BANCARD_COMMERCE_STAMP ?? '12559969',
+    expeditionPoint: process.env.BANCARD_COMMERCE_EXPEDITION_POINT ?? '001',
+    establishment: process.env.BANCARD_COMMERCE_ESTABLISHMENT ?? '001',
   },
 };
 

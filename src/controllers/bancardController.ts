@@ -603,6 +603,10 @@ export const pagoSimpleGateway = async (
       bancardResponse: result,
     });
 
+    console.log(`[bancardController] ◄ Respuesta enviada al frontend (action: ${action}):`);
+    console.log(JSON.stringify(responseBody, null, 2));
+    console.log('──────────────────────────────────────────────────────────────');
+
     res.status(statusCode).json(responseBody);
 
   } catch (error) {
@@ -641,6 +645,10 @@ export const pagoSimpleGateway = async (
       errorDetail: error instanceof Error && process.env.NODE_ENV !== 'production' ? error.stack : undefined,
       bancardMessages,
     });
+
+    console.log(`[bancardController] ◄ Respuesta de ERROR enviada al frontend (action: ${action}):`);
+    console.log(JSON.stringify(errorResponse, null, 2));
+    console.log('──────────────────────────────────────────────────────────────');
 
     res.status(statusCode).json(errorResponse);
   }

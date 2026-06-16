@@ -431,6 +431,9 @@ export const pagoSimpleGateway = async (
         const confirmationResult = await bancardService.getConfirmation(confirmShopId);
         result = confirmationResult;
 
+        // Recuperar el invoice_number persistido por el Webhook (ya que GET de Bancard podría no incluirlo)
+        const savedInvoiceNumber = await PagoSimpleAudit.getInvoiceNumber(confirmShopId);
+
         responseBody = {
           status: 'success',
           action,
@@ -447,7 +450,9 @@ export const pagoSimpleGateway = async (
               currency: confirmationResult.confirmation.currency,
               cardBrand: confirmationResult.confirmation.card_brand,
               cardMaskedNumber: confirmationResult.confirmation.card_masked_number,
-              electronicBillNumber: confirmationResult.confirmation.vpos_electronic_bill?.invoice_number,
+              electronicBillNumber: confirmationResult.confirmation.billing_response?.data?.invoice_number
+                || confirmationResult.confirmation.vpos_electronic_bill?.invoice_number
+                || savedInvoiceNumber,
               electronicBillCdc: confirmationResult.confirmation.vpos_electronic_bill?.cdc,
             } : null,
             messages: confirmationResult.messages,
@@ -746,6 +751,9 @@ export const getConfirmation = async (
     const { shopProcessId } = req.params;
     const result = await bancardService.getConfirmation(shopProcessId);
 
+    // Recuperar el invoice_number persistido por el Webhook (ya que GET de Bancard podría no incluirlo)
+    const savedInvoiceNumber = await PagoSimpleAudit.getInvoiceNumber(shopProcessId);
+
     const mappedData = {
       status: result.status,
       confirmation: result.confirmation ? {
@@ -757,7 +765,9 @@ export const getConfirmation = async (
         currency: result.confirmation.currency,
         cardBrand: result.confirmation.card_brand,
         cardMaskedNumber: result.confirmation.card_masked_number,
-        electronicBillNumber: result.confirmation.vpos_electronic_bill?.invoice_number,
+        electronicBillNumber: result.confirmation.billing_response?.data?.invoice_number
+          || result.confirmation.vpos_electronic_bill?.invoice_number
+          || savedInvoiceNumber,
         electronicBillCdc: result.confirmation.vpos_electronic_bill?.cdc,
       } : null,
       messages: result.messages,
@@ -843,8 +853,8 @@ export const confirmWebhook = async (req: Request<ParamsDictionary, unknown, Ban
 
     res.status(200).json({
       status: confirmation.status,
-      data: { 
-        shopProcessId: confirmation.shopProcessId, 
+      data: {
+        shopProcessId: confirmation.shopProcessId,
         processed: true,
         rawResponse: confirmation.rawOperation
       },
@@ -852,7 +862,7 @@ export const confirmWebhook = async (req: Request<ParamsDictionary, unknown, Ban
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('[bancardController] Error en webhook:', message);
-    
+
     // Registrar error del webhook si es posible
     await PagoSimpleAudit.saveAuditLog({
       action: 'webhook-confirmation',

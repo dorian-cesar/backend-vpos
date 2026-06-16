@@ -95,6 +95,27 @@ export class PagoSimpleAudit {
     }
   }
 
+  /**
+   * Recupera el invoice_number guardado asíncronamente por el webhook
+   */
+  static async getInvoiceNumber(shopProcessId: number | string): Promise<string | null> {
+    try {
+      const [rows] = await dbPool.query(
+        `SELECT invoice_number
+           FROM pago_simple_audits
+          WHERE shop_process_id = ? AND invoice_number IS NOT NULL
+          ORDER BY created_at DESC
+          LIMIT 1`,
+        [String(shopProcessId)]
+      ) as [Array<{ invoice_number: string | null }>, unknown];
+
+      return rows[0]?.invoice_number ?? null;
+    } catch (error) {
+      console.error('[PagoSimpleAudit] ❌ Error al buscar invoice_number:', error);
+      return null;
+    }
+  }
+
   static async saveAuditLog(data: {
     action?: string;
     externalId?: string;

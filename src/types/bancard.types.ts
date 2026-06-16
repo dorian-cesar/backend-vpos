@@ -138,6 +138,15 @@ export interface BancardConfirmation {
     cdc?: string;
     [key: string]: unknown;
   };
+  billing_response?: {
+    status?: string;
+    description?: string;
+    data?: {
+      invoice_number?: string;
+      [key: string]: unknown;
+    };
+    [key: string]: unknown;
+  };
   [key: string]: unknown;
 }
 

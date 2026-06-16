@@ -297,7 +297,7 @@ export class BancardService {
       responseDescription: operation.response_description,
       extendedResponseDescription: operation.extended_response_description,
       status: operation.response_code === '00' ? 'approved' : 'rejected',
-      electronicBillNumber: operation.vpos_electronic_bill?.invoice_number,
+      electronicBillNumber: operation.billing_response?.data?.invoice_number || operation.vpos_electronic_bill?.invoice_number,
       electronicBillCdc: operation.vpos_electronic_bill?.cdc,
       rawOperation: operation,
     };

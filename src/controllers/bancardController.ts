@@ -520,8 +520,8 @@ export const pagoSimpleGateway = async (
           return;
         }
 
-        const auditRecord = await PagoSimpleAudit.findLatestByProcessId(processId);
-        if (!auditRecord) {
+        const preauthShopId = await PagoSimpleAudit.lookupShopProcessId(processId);
+        if (!preauthShopId) {
           res.status(404).json({
             status: 'error',
             message: `No se encontró transacción original con processId ${processId}`,
@@ -529,7 +529,6 @@ export const pagoSimpleGateway = async (
           return;
         }
 
-        const preauthShopId = auditRecord.shopProcessId;
         auditBase.shopProcessId = preauthShopId;
 
         const preauthResult = await bancardService.preauthorizationConfirm({

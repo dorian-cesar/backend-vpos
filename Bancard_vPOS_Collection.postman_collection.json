@@ -261,6 +261,62 @@
             "description": "Cancela una factura electrónica generada enviando el processId y el RUC del cliente."
           },
           "response": []
+        },
+        {
+          "name": "1.j Confirmar Preautorización (preauth-confirm)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"action\": \"preauth-confirm\",\n    \"processId\": \"aBcD1234\",\n    \"amount\": 25000,\n    \"servicio\": \"boletos/custodia\",\n    \"canal\": \"totem/web/puntodeventa\",\n    \"id\": \"BOLETO-EXT-1001\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/pagosimple",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pagosimple"
+              ]
+            },
+            "description": "Confirma una preautorización generada previamente usando el processId."
+          },
+          "response": []
+        },
+        {
+          "name": "1.k Consultar Datos de Cliente (client-info)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"action\": \"client-info\",\n    \"clientRuc\": \"123456-1\",\n    \"servicio\": \"boletos/custodia\",\n    \"canal\": \"totem/web/puntodeventa\",\n    \"id\": \"BOLETO-EXT-1001\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/pagosimple",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pagosimple"
+              ]
+            },
+            "description": "Consulta los datos fiscales (Razón Social) de un cliente a través de su RUC."
+          },
+          "response": []
         }
       ]
     },

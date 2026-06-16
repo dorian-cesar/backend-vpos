@@ -285,6 +285,9 @@ router.post(
  *       - `list-cards`: Listar tarjetas de un usuario (requiere `userId`).
  *       - `charge`: Pago directo con tarjeta catastrada (requiere `amount`, `description`, `aliasToken`).
  *       - `delete-card`: Eliminar una tarjeta catastrada (requiere `userId`, `aliasToken`).
+ *       - `cancel-billing`: Cancelar factura electrónica (requiere `processId`, `clientRuc`).
+ *       - `preauth-confirm`: Confirmar preautorización (requiere `processId`).
+ *       - `client-info`: Consultar datos de cliente por RUC (requiere `clientRuc`).
  *     tags: [Pago Simple — Gateway]
  *     requestBody:
  *       required: true
@@ -315,7 +318,7 @@ router.post(
  *               processId:
  *                 type: string
  *                 example: "aBcD1234"
- *                 description: ID de proceso de Bancard. Requerido para rollback, confirmation y charge-back.
+ *                 description: ID de proceso de Bancard. Requerido para rollback, confirmation, charge-back, cancel-billing y preauth-confirm.
  *               amount:
  *                 type: number
  *                 example: 25000.00
@@ -339,7 +342,7 @@ router.post(
  *               clientRuc:
  *                 type: string
  *                 example: "123456-1"
- *                 description: Requerido para cancel-billing.
+ *                 description: Requerido para cancel-billing y client-info.
  *               additionalData:
  *                 type: string
  *                 example: "Datos adicionales"

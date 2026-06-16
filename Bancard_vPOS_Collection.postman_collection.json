@@ -300,7 +300,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"shopProcessId\": {{$randomInt}},\n    \"amount\": 25000,\n    \"currency\": \"PYG\",\n    \"description\": \"Compra Simple Pura\"\n}"
+              "raw": "{\n    \"amount\": 25000,\n    \"currency\": \"PYG\",\n    \"description\": \"Compra Simple Pura\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/bancard/single-buy",

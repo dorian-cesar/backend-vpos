@@ -75,16 +75,19 @@ const idValidation = () =>
  *         dsc:
  *           type: string
  *           example: "Operación realizada con éxito"
- *     BancardConfirmation:
+ *     PaymentConfirmationSummary:
  *       type: object
  *       properties:
- *         shop_process_id:
- *           type: integer
- *           example: 101
- *         ticket_number:
+ *         responseCode:
+ *           type: string
+ *           example: "00"
+ *         responseDescription:
+ *           type: string
+ *           example: "Approved"
+ *         ticketNumber:
  *           type: string
  *           example: "123456"
- *         authorization_number:
+ *         authorizationNumber:
  *           type: string
  *           example: "654321"
  *         amount:
@@ -93,21 +96,12 @@ const idValidation = () =>
  *         currency:
  *           type: string
  *           example: "PYG"
- *         card_brand:
+ *         cardBrand:
  *           type: string
  *           example: "VISA"
- *         card_masked_number:
+ *         cardMaskedNumber:
  *           type: string
  *           example: "411111XXXXXX1111"
- *         response_code:
- *           type: string
- *           example: "00"
- *         response_description:
- *           type: string
- *           example: "Approved"
- *         extended_response_description:
- *           type: string
- *           example: "Transaction completed successfully"
  *     ApiSuccessResponseSingleBuy:
  *       type: object
  *       properties:
@@ -601,7 +595,7 @@ router.post('/rollback', [shopProcessIdBodyValidation()], rollback);
  *                       type: string
  *                       example: "success"
  *                     confirmation:
- *                       $ref: '#/components/schemas/BancardConfirmation'
+ *                       $ref: '#/components/schemas/PaymentConfirmationSummary'
  *                     messages:
  *                       type: array
  *                       items:
@@ -705,7 +699,7 @@ router.post(
  *             type: object
  *             properties:
  *               operation:
- *                 $ref: '#/components/schemas/BancardConfirmation'
+ *                 $ref: '#/components/schemas/PaymentConfirmationSummary'
  *     responses:
  *       200:
  *         description: Webhook recibido y procesado exitosamente.

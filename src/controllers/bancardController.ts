@@ -161,7 +161,15 @@ export const pagoSimpleGateway = async (
         // Actualizar auditBase con el shopProcessId real generado
         auditBase.shopProcessId = shopProcessId;
 
-        result = await bancardService.initiateSingleBuy({
+        // ⚠️  returnUrl / cancelUrl: Bancard redirigirá al usuario a estas URLs
+        // tras completar el pago en el iframe. DEBEN ser rutas propias del frontend
+        // (ej: /pago/exitoso, /pago/cancelado). Si no se envían, se usa el fallback
+        // del .env que apunta a rutas del backend (solo útil para testing).
+        if (!returnUrl) {
+          console.warn(`[bancardController] ⚠️  single-buy sin returnUrl — se usará el fallback del .env. Asegúrese de que el frontend envíe su propia URL de confirmación.`);
+        }
+
+        const singleBuyResult = await bancardService.initiateSingleBuy({
           shopProcessId,
           amount,
           currency,
@@ -172,12 +180,18 @@ export const pagoSimpleGateway = async (
           returnUrl,
           cancelUrl,
         });
+        result = singleBuyResult;
 
         responseBody = {
           status: 'success',
           action,
           message: 'Compra iniciada exitosamente.',
-          data: result,  // incluye processId, shopProcessId, rawResponse, iframeUrl, sdkUrl
+          data: {
+            processId: singleBuyResult.processId,
+            iframeUrl: singleBuyResult.iframeUrl,
+            sdkUrl: singleBuyResult.sdkUrl,
+            environment: singleBuyResult.environment,
+          },
         };
         break;
       }
@@ -200,7 +214,11 @@ export const pagoSimpleGateway = async (
           return;
         }
 
-        result = await bancardService.initiateCardsNew({
+        if (!returnUrl) {
+          console.warn(`[bancardController] ⚠️  cards-new sin returnUrl — se usará el fallback del .env.`);
+        }
+
+        const cardsNewResult = await bancardService.initiateCardsNew({
           cardId,
           userId,
           userCellPhone,
@@ -208,12 +226,18 @@ export const pagoSimpleGateway = async (
           returnUrl,
           cancelUrl,
         });
+        result = cardsNewResult;
 
         responseBody = {
           status: 'success',
           action,
           message: 'Catastro de tarjeta iniciado exitosamente.',
-          data: result,  // ya incluye rawResponse via initiateCardsNew
+          data: {
+            processId: (cardsNewResult as any)?.processId ?? '',
+            iframeUrl: (cardsNewResult as any)?.iframeUrl ?? '',
+            sdkUrl: (cardsNewResult as any)?.sdkUrl ?? '',
+            environment: (cardsNewResult as any)?.environment ?? '',
+          },
         };
         break;
       }
@@ -239,7 +263,6 @@ export const pagoSimpleGateway = async (
           message: 'Listado de tarjetas obtenido exitosamente.',
           data: {
             userId,
-            rawResponse: result,
             cards: (result as any)?.cards ?? [],
             messages: (result as any)?.messages ?? [],
           },
@@ -285,11 +308,18 @@ export const pagoSimpleGateway = async (
           action,
           message: chargeResult.status === 'success' ? 'Pago con tarjeta guardada procesado.' : 'Pago pendiente de confirmación (débito).',
           data: {
-            shopProcessId: chargeShopProcessId,
             status: chargeResult.status,
-            confirmation: chargeResult.confirmation,
+            confirmation: chargeResult.confirmation ? {
+              responseCode: chargeResult.confirmation.response_code,
+              responseDescription: chargeResult.confirmation.response_description,
+              ticketNumber: chargeResult.confirmation.ticket_number,
+              authorizationNumber: chargeResult.confirmation.authorization_number,
+              amount: chargeResult.confirmation.amount,
+              currency: chargeResult.confirmation.currency,
+              cardBrand: chargeResult.confirmation.card_brand,
+              cardMaskedNumber: chargeResult.confirmation.card_masked_number,
+            } : null,
             messages: chargeResult.messages,
-            rawResponse: chargeResult.rawResponse,
             ...(chargeResult.iframeUrl ? { iframeUrl: chargeResult.iframeUrl } : {}),
           },
         };
@@ -323,10 +353,8 @@ export const pagoSimpleGateway = async (
           action,
           message: deleteResult.status === 'success' ? 'Tarjeta eliminada exitosamente.' : 'No se pudo eliminar la tarjeta.',
           data: {
-            userId,
             status: deleteResult.status,
             messages: deleteResult.messages,
-            rawResponse: deleteResult.rawResponse,
           },
         };
         break;
@@ -367,10 +395,8 @@ export const pagoSimpleGateway = async (
           message: rollbackResult.status === 'success' ? 'Rollback ejecutado correctamente.' : 'Error al ejecutar rollback.',
           data: {
             processId,
-            shopProcessId: rollbackShopId,
             processed: rollbackResult.status === 'success',
             messages: rollbackResult.messages,
-            rawResponse: rollbackResult.rawResponse
           },
         };
         break;
@@ -411,11 +437,18 @@ export const pagoSimpleGateway = async (
           message: 'Confirmación obtenida correctamente.',
           data: {
             processId,
-            shopProcessId: confirmShopId,
             status: confirmationResult.status,
-            confirmation: confirmationResult.confirmation,
+            confirmation: confirmationResult.confirmation ? {
+              responseCode: confirmationResult.confirmation.response_code,
+              responseDescription: confirmationResult.confirmation.response_description,
+              ticketNumber: confirmationResult.confirmation.ticket_number,
+              authorizationNumber: confirmationResult.confirmation.authorization_number,
+              amount: confirmationResult.confirmation.amount,
+              currency: confirmationResult.confirmation.currency,
+              cardBrand: confirmationResult.confirmation.card_brand,
+              cardMaskedNumber: confirmationResult.confirmation.card_masked_number,
+            } : null,
             messages: confirmationResult.messages,
-            rawResponse: confirmationResult.rawResponse,
           },
         };
         break;
@@ -459,10 +492,8 @@ export const pagoSimpleGateway = async (
           message: 'Contracargo procesado correctamente.',
           data: {
             processId,
-            shopProcessId: chargeBackShopId,
             status: chargeBackResult.status,
             messages: chargeBackResult.messages,
-            rawResponse: chargeBackResult.rawResponse,
           },
         };
         break;
@@ -501,15 +532,13 @@ export const pagoSimpleGateway = async (
         result = cancelBillingResult;
 
         responseBody = {
-          status: cancelBillingResult.status === 'success' ? 'success' as const : 'success' as const,
+          status: 'success' as const,
           action,
           message: cancelBillingResult.status === 'success' ? 'Factura electrónica cancelada exitosamente.' : 'Error al cancelar la factura electrónica.',
           data: {
             processId,
-            shopProcessId: cancelBillingShopId,
             status: cancelBillingResult.status,
             messages: cancelBillingResult.messages,
-            rawResponse: cancelBillingResult.rawResponse,
           },
         };
         break;
@@ -550,11 +579,17 @@ export const pagoSimpleGateway = async (
           message: 'Preautorización confirmada correctamente.',
           data: {
             processId,
-            shopProcessId: preauthShopId,
-            status: preauthResult.status,
-            confirmation: preauthResult.confirmation,
+            confirmation: preauthResult.confirmation ? {
+              responseCode: preauthResult.confirmation.response_code,
+              responseDescription: preauthResult.confirmation.response_description,
+              ticketNumber: preauthResult.confirmation.ticket_number,
+              authorizationNumber: preauthResult.confirmation.authorization_number,
+              amount: preauthResult.confirmation.amount,
+              currency: preauthResult.confirmation.currency,
+              cardBrand: preauthResult.confirmation.card_brand,
+              cardMaskedNumber: preauthResult.confirmation.card_masked_number,
+            } : null,
             messages: preauthResult.messages,
-            rawResponse: preauthResult.rawResponse,
           },
         };
         break;
@@ -582,10 +617,9 @@ export const pagoSimpleGateway = async (
           status: 'success',
           message: 'Datos de cliente obtenidos correctamente.',
           data: {
-            status: infoResult.status,
-            client: infoResult.client,
+            clientName: infoResult.client?.name,
+            clientEmail: infoResult.client?.email,
             messages: infoResult.messages,
-            rawResponse: infoResult.rawResponse,
           },
         };
         break;

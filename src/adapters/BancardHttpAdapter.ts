@@ -595,8 +595,8 @@ export class BancardHttpAdapter implements IBancardAdapter {
   // ─── Getters ───────────────────────────────────────────────────────────────
 
   /** Retorna la URL del iframe de pago para el `process_id` dado. */
-  getIframeUrl(processId: string): string {
-    return this.strategy.getIframeUrl(processId);
+  getIframeUrl(processId: string, operation: 'single_buy' | 'new_card' = 'single_buy'): string {
+    return this.strategy.getIframeUrl(processId, operation);
   }
 
   /** Retorna la URL del SDK de Bancard. */

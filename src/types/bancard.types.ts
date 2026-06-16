@@ -150,7 +150,7 @@ export interface IBancardAdapter {
   cancelBilling(params: CancelBillingParams): Promise<BancardRawResponse>;
   preauthorizationConfirm(params: PreauthConfirmParams): Promise<BancardRawResponse>;
   getClientInfo(params: ClientInfoParams): Promise<BancardRawResponse>;
-  getIframeUrl(processId: string): string;
+  getIframeUrl(processId: string, operation?: 'single_buy' | 'new_card'): string;
   getSdkUrl(): string;
   getEnvironment(): string;
 }
@@ -170,6 +170,7 @@ export interface SingleBuyResult {
 export interface CardsNewResult {
   processId: string;
   status: string;
+  iframeUrl?: string;
   environment: BancardEnvironmentName;
   rawResponse: BancardRawResponse;
 }

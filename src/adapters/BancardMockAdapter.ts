@@ -221,8 +221,9 @@ export class BancardMockAdapter implements IBancardAdapter {
 
   // ─── Getters ───────────────────────────────────────────────────────────────
 
-  getIframeUrl(processId: string): string {
-    return `${bancardConfig.environments.staging.baseUrl}/payment/card/new_hp?process_id=${processId}&mock=true`;
+  getIframeUrl(processId: string, operation: 'single_buy' | 'new_card' = 'single_buy'): string {
+    const path = operation === 'new_card' ? '/payment/card/new_hp' : '/payment/single_buy';
+    return `${bancardConfig.environments.staging.baseUrl}${path}?process_id=${processId}&mock=true`;
   }
 
   getSdkUrl(): string {

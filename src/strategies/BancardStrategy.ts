@@ -54,12 +54,9 @@ export abstract class BancardStrategy {
     };
   }
 
-  /**
-   * Retorna la URL del iframe de pago de Bancard para el `process_id` dado.
-   * @param processId - process_id retornado por la operación single_buy
-   */
-  getIframeUrl(processId: string): string {
-    return `${this.getBaseUrl()}/payment/card/new_hp?process_id=${processId}`;
+  getIframeUrl(processId: string, operation: 'single_buy' | 'new_card' = 'single_buy'): string {
+    const path = operation === 'new_card' ? '/payment/card/new_hp' : '/payment/single_buy';
+    return `${this.getBaseUrl()}${path}?process_id=${processId}`;
   }
 
   /**

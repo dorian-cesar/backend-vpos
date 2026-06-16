@@ -122,7 +122,7 @@ export class BancardService {
     return {
       processId,
       shopProcessId: Number(shopProcessId),
-      iframeUrl: this.adapter.getIframeUrl(processId),
+      iframeUrl: this.adapter.getIframeUrl(processId, 'single_buy'),
       sdkUrl: this.adapter.getSdkUrl(),
       status,
       environment: this.adapter.getEnvironment() as 'staging' | 'production',
@@ -152,6 +152,7 @@ export class BancardService {
     return {
       processId,
       status,
+      iframeUrl: this.adapter.getIframeUrl(processId, 'new_card'),
       environment: this.adapter.getEnvironment() as 'staging' | 'production',
       rawResponse: bancardResponse,
     };

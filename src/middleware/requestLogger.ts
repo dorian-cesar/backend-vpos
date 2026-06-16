@@ -13,6 +13,11 @@ const requestLogger = (req: Request, res: Response, next: NextFunction): void =>
     const duration = Date.now() - start;
     const { statusCode } = res;
 
+    // Ignorar 404s de rutas que no son de la API (generalmente bots/scanners)
+    if (statusCode === 404 && !originalUrl.startsWith('/api')) {
+      return;
+    }
+
     const color =
       statusCode >= 500 ? '\x1b[31m'  // rojo
       : statusCode >= 400 ? '\x1b[33m' // amarillo

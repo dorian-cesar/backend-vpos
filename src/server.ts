@@ -37,7 +37,9 @@ app.use(express.urlencoded({ extended: true }));
 
 
 if (process.env.NODE_ENV !== 'test') {
-  app.use(morgan('dev'));
+  app.use(morgan('dev', {
+    skip: (req, res) => res.statusCode === 404 && !req.originalUrl.startsWith('/api')
+  }));
   app.use(requestLogger);
 }
 

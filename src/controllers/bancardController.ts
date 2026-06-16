@@ -1,21 +1,28 @@
 /**
  * bancardController.ts
  * Controladores Express tipados para los endpoints de Bancard vPOS.
+ *
+ * Responsabilidades:
+ * - Validar el request (via express-validator)
+ * - Orquestar la llamada al servicio correspondiente
+ * - Construir la respuesta tipada (usando los DTOs de respuesta)
+ * - Guardar auditoría en BD
+ *
+ * Para los contratos exactos de entrada/salida, ver: src/dtos/
  */
 
 import type { Request, Response } from 'express';
 import type { ParamsDictionary } from 'express-serve-static-core';
 import { validationResult } from 'express-validator';
 import { BancardService, BancardApiError } from '../services/BancardService.js';
+import type { BancardWebhookPayload } from '../types/bancard.types.js';
+import type { ApiErrorResponse, ApiSuccessResponse } from '../types/api.types.js';
+import type { PagoSimpleLooseDto, LegacyRollbackRequestDto, LegacyChargeBackRequestDto, SingleBuyDto } from '../dtos/requests/pagoSimple.request.dto.js';
 import type {
-  ApiErrorResponse,
-  ApiSuccessResponse,
-  BancardWebhookPayload,
-  ChargeBackRequest,
-  RollbackRequest,
-  SingleBuyRequest,
-  PagoSimpleRequest,
-} from '../types/bancard.types.js';
+  ApiSuccessDto,
+  ApiErrorDto,
+  HealthCheckResponseDto,
+} from '../dtos/responses/pagoSimple.response.dto.js';
 import { PagoSimpleAudit } from '../models/PagoSimpleAudit.js';
 import { generateShopProcessId } from '../utils/shopProcessIdGenerator.js';
 
@@ -44,7 +51,7 @@ const checkValidation = (req: Request, res: Response): boolean => {
 // ─── 1. POST /api/bancard/single-buy ───────────────────────────────────────
 
 export const initiateSingleBuy = async (
-  req: Request<ParamsDictionary, unknown, SingleBuyRequest>,
+  req: Request<ParamsDictionary, unknown, SingleBuyDto>,
   res: Response,
 ): Promise<void> => {
   if (!checkValidation(req, res)) return;
@@ -98,7 +105,7 @@ export const initiateSingleBuy = async (
 // El campo `action` determina qué operación de Bancard se ejecuta.
 
 export const pagoSimpleGateway = async (
-  req: Request<Record<string, never>, unknown, PagoSimpleRequest>,
+  req: Request<Record<string, never>, unknown, PagoSimpleLooseDto>,
   res: Response,
 ): Promise<void> => {
   if (!checkValidation(req, res)) return;
@@ -107,7 +114,7 @@ export const pagoSimpleGateway = async (
   const ipAddress = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket.remoteAddress || undefined;
   let result: unknown = null;
   let statusCode = 200;
-  let responseBody: unknown = null;
+  let responseBody: ApiSuccessDto | ApiErrorDto | null = null;
 
   // ─── Auditoría base (campos comunes a todas las acciones) ───────────────
   const auditBase = {
@@ -274,7 +281,7 @@ export const pagoSimpleGateway = async (
         result = chargeResult;
 
         responseBody = {
-          status: chargeResult.status,
+          status: 'success' as const,
           action,
           message: chargeResult.status === 'success' ? 'Pago con tarjeta guardada procesado.' : 'Pago pendiente de confirmación (débito).',
           data: {
@@ -312,7 +319,7 @@ export const pagoSimpleGateway = async (
         result = deleteResult;
 
         responseBody = {
-          status: deleteResult.status,
+          status: 'success' as const,
           action,
           message: deleteResult.status === 'success' ? 'Tarjeta eliminada exitosamente.' : 'No se pudo eliminar la tarjeta.',
           data: {
@@ -355,7 +362,7 @@ export const pagoSimpleGateway = async (
         result = rollbackResult;
 
         responseBody = {
-          status: rollbackResult.status,
+          status: 'success' as const,
           action,
           message: rollbackResult.status === 'success' ? 'Rollback ejecutado correctamente.' : 'Error al ejecutar rollback.',
           data: {
@@ -494,7 +501,7 @@ export const pagoSimpleGateway = async (
         result = cancelBillingResult;
 
         responseBody = {
-          status: cancelBillingResult.status,
+          status: cancelBillingResult.status === 'success' ? 'success' as const : 'success' as const,
           action,
           message: cancelBillingResult.status === 'success' ? 'Factura electrónica cancelada exitosamente.' : 'Error al cancelar la factura electrónica.',
           data: {
@@ -658,7 +665,7 @@ export const pagoSimpleGateway = async (
 // ─── 2. POST /api/bancard/rollback ─────────────────────────────────────────
 
 export const rollback = async (
-  req: Request<ParamsDictionary, unknown, RollbackRequest>,
+  req: Request<ParamsDictionary, unknown, LegacyRollbackRequestDto>,
   res: Response,
 ): Promise<void> => {
   if (!checkValidation(req, res)) return;
@@ -722,7 +729,7 @@ export const getConfirmation = async (
 // ─── 4. POST /api/bancard/charge-back ────────────────────────────────────
 
 export const chargeBack = async (
-  req: Request<ParamsDictionary, unknown, ChargeBackRequest>,
+  req: Request<ParamsDictionary, unknown, LegacyChargeBackRequestDto>,
   res: Response,
 ): Promise<void> => {
   if (!checkValidation(req, res)) return;
@@ -784,12 +791,13 @@ export const confirmWebhook = (req: Request<ParamsDictionary, unknown, BancardWe
 // ─── 6. GET /api/bancard/health ──────────────────────────────────────────
 
 export const healthCheck = (_req: Request, res: Response): void => {
-  res.status(200).json({
+  const body: HealthCheckResponseDto = {
     status: 'ok',
     service: 'Bancard vPOS',
     environment: bancardService.adapter.getEnvironment(),
     timestamp: new Date().toISOString(),
-  });
+  };
+  res.status(200).json(body);
 };
 
 // ─── 7. Helpers para Visualización (Success / Fail URLs) ─────────────────────

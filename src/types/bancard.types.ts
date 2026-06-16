@@ -250,102 +250,16 @@ export interface ProcessedConfirmation {
   rawOperation: BancardConfirmation;
 }
 
-// ─── Requests HTTP ────────────────────────────────────────────────────────
+// ─── Re-exports de DTOs (backward compatibility) ──────────────────────────
+// Estos tipos han sido movidos a src/dtos/ como parte de la capa DTO.
+// Se re-exportan aquí para no romper imports existentes.
 
-export interface SingleBuyRequest {
-  // shopProcessId es generado internamente por el backend — NO enviado por el frontend
-  amount: number;
-  currency?: BancardCurrency;
-  description: string;
-  ivaAmount?: number;
-  billing?: BancardBilling;
-  additionalData?: string;
-  returnUrl?: string;
-  cancelUrl?: string;
-}
+export type { ApiSuccessResponse, ApiErrorResponse } from './api.types.js';
+export type {
+  PagoSimpleAction,
+  PagoSimpleLooseDto as PagoSimpleRequest,
+  LegacyRollbackRequestDto as RollbackRequest,
+  LegacyChargeBackRequestDto as ChargeBackRequest,
+  SingleBuyDto as SingleBuyRequest,
+} from '../dtos/requests/pagoSimple.request.dto.js';
 
-// ─── Acciones disponibles en el Gateway /api/pagosimple ───────────────────
-// Discriminador que el frontend envía para indicar qué operación ejecutar.
-export type PagoSimpleAction =
-  | 'single-buy'    // Iniciar una nueva compra (flujo principal)
-  | 'rollback'      // Revertir una transacción pendiente/no confirmada
-  | 'confirmation'  // Consultar el estado de una transacción
-  | 'charge-back'   // Devolución de un pago ya aprobado
-  | 'cards-new'     // Iniciar proceso de catastro de nueva tarjeta
-  | 'list-cards'    // Listar tarjetas catastradas de un usuario
-  | 'charge'        // Pago con tarjeta guardada (alias_token)
-  | 'delete-card'   // Eliminar una tarjeta catastrada
-  | 'cancel-billing'// Cancelar factura electrónica
-  | 'preauth-confirm' // Confirmar preautorización
-  | 'client-info';  // Consultar datos de cliente por RUC
-
-export interface PagoSimpleRequest {
-  // ─── Discriminador (siempre requerido) ─────────────────────────────────
-  action: PagoSimpleAction;
-
-  // ─── Auditoría (opcionales, aplican a todas las acciones) ──────────────
-  servicio?: string;
-  canal?: string;
-  id?: string;
-
-  // ─── Referencia de sesión de pago Bancard ───────────────────────────────
-  // El frontend NUNCA envía shopProcessId (lo genera el backend).
-  // Para rollback / confirmation / charge-back el frontend envía processId
-  // (el process_id de Bancard retornado por single-buy) y el backend resuelve
-  // internamente el shopProcessId desde su tabla de auditoría.
-  processId?: string;    // process_id de Bancard — usado en rollback/confirmation/charge-back
-
-  // ─── Campos para 'single-buy' ──────────────────────────────────────────
-  // shopProcessId NO se acepta del frontend — se genera en el backend.
-  amount?: number;
-  currency?: BancardCurrency;
-  description?: string;
-  ivaAmount?: number;
-  billing?: BancardBilling;
-  additionalData?: string;
-  returnUrl?: string;
-  cancelUrl?: string;
-
-  // ─── Campos para 'cancel-billing' ──────────────────────────────────────
-  clientRuc?: string;
-
-  // ─── Campos para 'charge-back' (requiere amount además de processId) ───
-  // amount ya está definido arriba
-
-  // ─── Campos para 'cards-new' ──────────────────────────────────────────
-  cardId?: number;
-  userId?: number;
-  userCellPhone?: string;
-  userMail?: string;
-
-  // ─── Campos para 'charge' (pago con alias) ─────────────────────────────
-  // shopProcessId también se genera internamente para 'charge'
-  aliasToken?: string;
-  numberOfPayments?: number;
-}
-
-export interface RollbackRequest {
-  shopProcessId: number;
-}
-
-export interface ChargeBackRequest {
-  shopProcessId: number;
-  amount: number;
-  currency?: BancardCurrency;
-}
-
-// ─── Respuestas HTTP de la API propia ─────────────────────────────────────
-
-export interface ApiSuccessResponse<T> {
-  status: 'success';
-  message?: string;
-  data: T;
-}
-
-export interface ApiErrorResponse {
-  status: 'error';
-  message: string;
-  errors?: Array<{ field: string; message: string }>;
-  bancardMessages?: BancardMessage[];
-  detail?: string;
-}

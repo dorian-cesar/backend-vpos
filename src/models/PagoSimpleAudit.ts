@@ -116,6 +116,29 @@ export class PagoSimpleAudit {
     }
   }
 
+  /**
+   * Recupera el bancard_process_id asociado a un shop_process_id desde el registro 'single-buy'
+   */
+  static async lookupBancardProcessId(shopProcessId: number | string): Promise<string | null> {
+    try {
+      const [rows] = await dbPool.query(
+        `SELECT bancard_process_id
+           FROM pago_simple_audits
+          WHERE shop_process_id = ?
+            AND bancard_process_id IS NOT NULL
+            AND action = 'single-buy'
+          ORDER BY created_at DESC
+          LIMIT 1`,
+        [String(shopProcessId)]
+      ) as [Array<{ bancard_process_id: string | null }>, unknown];
+
+      return rows[0]?.bancard_process_id ?? null;
+    } catch (error) {
+      console.error('[PagoSimpleAudit] ❌ Error al buscar bancard_process_id:', error);
+      return null;
+    }
+  }
+
   static async saveAuditLog(data: {
     action?: string;
     externalId?: string;

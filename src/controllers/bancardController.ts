@@ -832,13 +832,16 @@ export const confirmWebhook = async (req: Request<ParamsDictionary, unknown, Ban
     // TODO: Actualizar estado del pedido en tu base de datos:
     // await OrderService.updatePaymentStatus(confirmation.shopProcessId, confirmation.status);
 
+    // Recuperar el bancard_process_id real para mantener la consistencia en el log de auditoría
+    const realBancardProcessId = await PagoSimpleAudit.lookupBancardProcessId(confirmation.shopProcessId);
+
     // Guardar la transacción en la auditoría incluyendo el invoice_number
     await PagoSimpleAudit.saveAuditLog({
       action: 'webhook-confirmation',
       shopProcessId: confirmation.shopProcessId,
       amount: confirmation.amount,
       currency: confirmation.currency,
-      bancardProcessId: String(confirmation.shopProcessId),
+      bancardProcessId: realBancardProcessId || undefined,
       statusResult: confirmation.status,
       invoiceNumber: confirmation.electronicBillNumber,
       bancardResponse: req.body,

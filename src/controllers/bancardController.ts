@@ -745,9 +745,26 @@ export const getConfirmation = async (
     const { shopProcessId } = req.params;
     const result = await bancardService.getConfirmation(shopProcessId);
 
-    const body: ApiSuccessResponse<typeof result> = {
+    const mappedData = {
+      status: result.status,
+      confirmation: result.confirmation ? {
+        responseCode: result.confirmation.response_code,
+        responseDescription: result.confirmation.response_description,
+        ticketNumber: result.confirmation.ticket_number,
+        authorizationNumber: result.confirmation.authorization_number,
+        amount: result.confirmation.amount,
+        currency: result.confirmation.currency,
+        cardBrand: result.confirmation.card_brand,
+        cardMaskedNumber: result.confirmation.card_masked_number,
+        electronicBillNumber: result.confirmation.vpos_electronic_bill?.invoice_number,
+        electronicBillCdc: result.confirmation.vpos_electronic_bill?.cdc,
+      } : null,
+      messages: result.messages,
+    };
+
+    const body: ApiSuccessResponse<typeof mappedData> = {
       status: 'success',
-      data: result,
+      data: mappedData,
     };
     res.status(200).json(body);
   } catch (error) {
@@ -794,7 +811,7 @@ export const chargeBack = async (
 
 // ─── 5. POST /api/bancard/confirm (Webhook) ───────────────────────────────
 
-export const confirmWebhook = (req: Request<ParamsDictionary, unknown, BancardWebhookPayload>, res: Response): void => {
+export const confirmWebhook = async (req: Request<ParamsDictionary, unknown, BancardWebhookPayload>, res: Response): Promise<void> => {
   try {
     console.log('[bancardController] Webhook recibido:', JSON.stringify(req.body, null, 2));
 
@@ -803,10 +820,23 @@ export const confirmWebhook = (req: Request<ParamsDictionary, unknown, BancardWe
     // TODO: Actualizar estado del pedido en tu base de datos:
     // await OrderService.updatePaymentStatus(confirmation.shopProcessId, confirmation.status);
 
-    console.log('[bancardController] Pago procesado:', {
+    // Guardar la transacción en la auditoría incluyendo el invoice_number
+    await PagoSimpleAudit.saveAuditLog({
+      action: 'webhook-confirmation',
+      shopProcessId: confirmation.shopProcessId,
+      amount: confirmation.amount,
+      currency: confirmation.currency,
+      bancardProcessId: String(confirmation.shopProcessId),
+      statusResult: confirmation.status,
+      invoiceNumber: confirmation.electronicBillNumber,
+      bancardResponse: req.body,
+    });
+
+    console.log('[bancardController] Pago procesado (Webhook):', {
       shopProcessId: confirmation.shopProcessId,
       status: confirmation.status,
       amount: confirmation.amount,
+      invoiceNumber: confirmation.electronicBillNumber,
     });
 
     res.status(200).json({
@@ -820,6 +850,16 @@ export const confirmWebhook = (req: Request<ParamsDictionary, unknown, BancardWe
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('[bancardController] Error en webhook:', message);
+    
+    // Registrar error del webhook si es posible
+    await PagoSimpleAudit.saveAuditLog({
+      action: 'webhook-confirmation',
+      statusResult: 'error',
+      bancardResponse: req.body,
+      errorCode: 500,
+      errorMessage: message,
+    }).catch(e => console.error('[bancardController] Error guardando log de fallo:', e));
+
     res.status(500).json({ status: 'error', message: 'Error procesando confirmación.' });
   }
 };

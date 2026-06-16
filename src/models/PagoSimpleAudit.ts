@@ -20,6 +20,7 @@ export class PagoSimpleAudit {
         description     VARCHAR(255)      DEFAULT NULL,
         bancard_process_id VARCHAR(255)   DEFAULT NULL COMMENT 'processId retornado por Bancard tras single-buy',
         status_result   VARCHAR(50)       DEFAULT NULL COMMENT 'success | error devuelto por Bancard',
+        invoice_number  VARCHAR(255)      DEFAULT NULL COMMENT 'Número de factura electrónica',
         request_payload JSON              DEFAULT NULL COMMENT 'Body completo del request entrante',
         bancard_response JSON             DEFAULT NULL COMMENT 'Respuesta completa de Bancard',
         error_code      VARCHAR(50)       DEFAULT NULL COMMENT 'Código HTTP del error (400, 422, 500)',
@@ -37,6 +38,22 @@ export class PagoSimpleAudit {
 
     try {
       await dbPool.query(auditTable);
+      
+      // Intentar agregar la columna por si la tabla ya existía de versiones anteriores
+      try {
+        await dbPool.query(`
+          ALTER TABLE pago_simple_audits 
+          ADD COLUMN invoice_number VARCHAR(255) DEFAULT NULL COMMENT 'Número de factura electrónica' 
+          AFTER status_result;
+        `);
+        console.log('[DB] ➕ Columna invoice_number agregada a la tabla pago_simple_audits.');
+      } catch (err: any) {
+        // Código 1060 es ER_DUP_FIELDNAME (columna ya existe). Ignoramos el error si ya existe.
+        if (err.code !== 'ER_DUP_FIELDNAME') {
+          console.warn('[DB] ⚠️ No se pudo asegurar la columna invoice_number (puede ignorarse si es error de sintaxis al ya existir):', err.message);
+        }
+      }
+      
       console.log('[DB] ✅ Tabla unificada pago_simple_audits verificada/creada.');
     } catch (error) {
       console.error('[DB] ❌ Error al inicializar tabla pago_simple_audits:', error);
@@ -89,6 +106,7 @@ export class PagoSimpleAudit {
     description?: string;
     bancardProcessId?: string;
     statusResult?: string;
+    invoiceNumber?: string;
     requestPayload?: unknown;
     bancardResponse?: unknown;
     errorCode?: number | string;
@@ -100,9 +118,9 @@ export class PagoSimpleAudit {
     const query = `
       INSERT INTO pago_simple_audits
         (action, external_id, servicio, canal, shop_process_id, amount, currency,
-         description, bancard_process_id, status_result, request_payload, bancard_response,
+         description, bancard_process_id, status_result, invoice_number, request_payload, bancard_response,
          error_code, error_message, error_detail, bancard_messages, ip_address)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     try {
@@ -117,6 +135,7 @@ export class PagoSimpleAudit {
         data.description ?? null,
         data.bancardProcessId ?? null,
         data.statusResult ?? null,
+        data.invoiceNumber ?? null,
         data.requestPayload ? JSON.stringify(data.requestPayload) : null,
         data.bancardResponse ? JSON.stringify(data.bancardResponse) : null,
         data.errorCode ? String(data.errorCode) : null,

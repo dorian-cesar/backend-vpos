@@ -133,6 +133,11 @@ export interface BancardConfirmation {
   response_code?: string;
   response_description?: string;
   extended_response_description?: string;
+  vpos_electronic_bill?: {
+    invoice_number?: string;
+    cdc?: string;
+    [key: string]: unknown;
+  };
   [key: string]: unknown;
 }
 
@@ -248,6 +253,8 @@ export interface ProcessedConfirmation {
   responseDescription?: string;
   extendedResponseDescription?: string;
   status: 'approved' | 'rejected';
+  electronicBillNumber?: string;
+  electronicBillCdc?: string;
   rawOperation: BancardConfirmation;
 }
 

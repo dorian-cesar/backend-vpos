@@ -447,6 +447,8 @@ export const pagoSimpleGateway = async (
               currency: confirmationResult.confirmation.currency,
               cardBrand: confirmationResult.confirmation.card_brand,
               cardMaskedNumber: confirmationResult.confirmation.card_masked_number,
+              electronicBillNumber: confirmationResult.confirmation.vpos_electronic_bill?.invoice_number,
+              electronicBillCdc: confirmationResult.confirmation.vpos_electronic_bill?.cdc,
             } : null,
             messages: confirmationResult.messages,
           },

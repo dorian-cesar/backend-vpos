@@ -508,11 +508,88 @@ export const pagoSimpleGateway = async (
         break;
       }
 
+      // ── 10. preauth-confirm: Confirmar preautorización ──────────────────────────
+      case 'preauth-confirm': {
+        const { processId, amount, billing } = req.body;
+        if (!processId) {
+          res.status(422).json({
+            status: 'error',
+            message: 'Datos de entrada inválidos.',
+            errors: [{ field: 'processId', message: 'processId es requerido para preauth-confirm.' }],
+          });
+          return;
+        }
+
+        const auditRecord = await PagoSimpleAudit.findLatestByProcessId(processId);
+        if (!auditRecord) {
+          res.status(404).json({
+            status: 'error',
+            message: `No se encontró transacción original con processId ${processId}`,
+          });
+          return;
+        }
+
+        const preauthShopId = auditRecord.shopProcessId;
+        auditBase.shopProcessId = preauthShopId;
+
+        const preauthResult = await bancardService.preauthorizationConfirm({
+          shopProcessId: preauthShopId,
+          amount,
+          billing,
+        });
+
+        result = preauthResult;
+        responseBody = {
+          status: 'success',
+          message: 'Preautorización confirmada correctamente.',
+          data: {
+            processId,
+            shopProcessId: preauthShopId,
+            status: preauthResult.status,
+            confirmation: preauthResult.confirmation,
+            messages: preauthResult.messages,
+            rawResponse: preauthResult.rawResponse,
+          },
+        };
+        break;
+      }
+
+      // ── 11. client-info: Obtener Razón Social por RUC ───────────────────────
+      case 'client-info': {
+        const { clientRuc } = req.body;
+        if (!clientRuc) {
+          res.status(422).json({
+            status: 'error',
+            message: 'Datos de entrada inválidos.',
+            errors: [{ field: 'clientRuc', message: 'clientRuc es requerido para client-info.' }],
+          });
+          return;
+        }
+
+        // shopProcessId no es requerido para client-info, asignamos un dummy
+        auditBase.shopProcessId = generateShopProcessId();
+
+        const infoResult = await bancardService.getClientInfo({ clientRuc });
+
+        result = infoResult;
+        responseBody = {
+          status: 'success',
+          message: 'Datos de cliente obtenidos correctamente.',
+          data: {
+            status: infoResult.status,
+            client: infoResult.client,
+            messages: infoResult.messages,
+            rawResponse: infoResult.rawResponse,
+          },
+        };
+        break;
+      }
+
       // ── Acción desconocida (no debería llegar aquí por la validación) ─────
       default: {
         res.status(422).json({
           status: 'error',
-          message: `Acción no reconocida: "${action}". Valores válidos: single-buy, rollback, confirmation, charge-back, cards-new, list-cards, charge, delete-card, cancel-billing.`,
+          message: `Acción no reconocida: "${action}". Valores válidos: single-buy, rollback, confirmation, charge-back, cards-new, list-cards, charge, delete-card, cancel-billing, preauth-confirm, client-info.`,
         });
         return;
       }

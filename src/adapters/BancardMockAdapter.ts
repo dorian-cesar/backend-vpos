@@ -18,6 +18,8 @@ import type {
   ChargeParams,
   DeleteCardParams,
   CancelBillingParams,
+  PreauthConfirmParams,
+  ClientInfoParams,
   IBancardAdapter,
 } from '../types/bancard.types.js';
 import bancardConfig from '../config/bancard.config.js';
@@ -186,14 +188,45 @@ export class BancardMockAdapter implements IBancardAdapter {
     } as unknown as BancardRawResponse;
   }
 
+  async getClientInfo(params: ClientInfoParams): Promise<BancardRawResponse> {
+    await this._delay();
+    console.log(`[BancardMockAdapter] 🧑 Simulando getClientInfo para RUC: ${params.clientRuc}`);
+    return {
+      status: 'success',
+      client: {
+        name: 'Cliente Mock (MOCK)',
+        email: 'cliente@mock.com',
+      },
+    };
+  }
+
+  async preauthorizationConfirm(params: PreauthConfirmParams): Promise<BancardRawResponse> {
+    await this._delay();
+    console.log(`[BancardMockAdapter] ✅ Simulando preauthorizationConfirm para shopProcessId: ${params.shopProcessId}`);
+    return {
+      status: 'success',
+      confirmation: {
+        shop_process_id: Number(params.shopProcessId),
+        response_code: '00',
+        response_description: 'Transacción aprobada (MOCK).',
+        amount: params.amount ? params.amount.toString() : '15000.00',
+        currency: 'PYG',
+        authorization_number: '123456',
+        ticket_number: '123456789123456',
+        card_brand: 'MasterCard',
+        card_masked_number: '5418********0014',
+      },
+    };
+  }
+
+  // ─── Getters ───────────────────────────────────────────────────────────────
+
   getIframeUrl(processId: string): string {
-    // Usamos la URL de staging para que apunte a un dominio válido (aunque fallará por el process_id inválido)
-    // Opcionalmente podrías retornar una URL de localhost que levante un HTML simulado.
-    return `${bancardConfig.environments.staging.baseUrl}/payment/card/new_hp?process_id=${processId}`;
+    return `${bancardConfig.environments.staging.baseUrl}/payment/card/new_hp?process_id=${processId}&mock=true`;
   }
 
   getSdkUrl(): string {
-    return `${bancardConfig.environments.staging.baseUrl}/checkout/javascript/dist/bancard-checkout-4.0.0.js`;
+    return 'https://vpos.infonet.com.py/payment/vpos/vpos.js'; // URL real para que el script no falle
   }
 
   getEnvironment(): string {

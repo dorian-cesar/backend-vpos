@@ -92,7 +92,7 @@ app.listen(PORT, async () => {
   console.log('\n📋 Endpoints:');
   console.log(`   GET  ${baseUrl}/api/bancard/health`);
   console.log(`   POST ${baseUrl}/api/pagosimple`);
-  console.log(`        └─ Acciones: 'single-buy', 'rollback', 'confirmation', 'charge-back', 'cards-new', 'list-cards', 'charge', 'delete-card', 'cancel-billing'`);
+  console.log(`        └─ Acciones: 'single-buy', 'rollback', 'confirmation', 'charge-back', 'cards-new', 'list-cards', 'charge', 'delete-card', 'cancel-billing', 'preauth-confirm', 'client-info'`);
 
   console.log(`   POST ${baseUrl}/api/bancard/single-buy`);
   console.log(`   POST ${baseUrl}/api/bancard/rollback`);

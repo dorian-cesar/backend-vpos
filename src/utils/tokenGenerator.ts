@@ -99,3 +99,20 @@ export const generateCancelBillingToken = (
   privateKey: string,
   shopProcessId: number | string,
 ): string => md5(`${privateKey}${shopProcessId}billing_cancel`);
+
+/**
+ * Genera el token de seguridad para `preauthorizations/confirm`.
+ * Fórmula: md5(private_key + shop_process_id + "pre-authorization-confirm")
+ */
+export const generatePreauthConfirmToken = (
+  privateKey: string,
+  shopProcessId: number | string,
+): string => md5(`${privateKey}${shopProcessId}pre-authorization-confirm`);
+
+/**
+ * Genera el token de seguridad para `billing/client_info`.
+ * Fórmula: md5(private_key + "billing_client_info")
+ */
+export const generateClientInfoToken = (
+  privateKey: string,
+): string => md5(`${privateKey}billing_client_info`);

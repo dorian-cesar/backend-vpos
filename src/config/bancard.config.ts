@@ -24,6 +24,8 @@ interface BancardConfigInternal {
     usersBase: string;
     charge: string;
     cancelBilling: string;
+    preauthConfirm: string;
+    clientInfo: string;
   };
   readonly iframeUrl: string;
   httpTimeout: number;
@@ -67,6 +69,8 @@ const config: BancardConfigInternal = {
     usersBase: '/vpos/api/0.3/users',
     charge: '/vpos/api/0.3/charge',
     cancelBilling: '/vpos/api/0.3/billing/cancel',
+    preauthConfirm: '/vpos/api/0.3/preauthorizations/confirm',
+    clientInfo: '/vpos/api/0.3/billing/client_info',
   },
 
   // ─── URL del iframe (getter) ──────────────────────────────────────────────

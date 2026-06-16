@@ -30,6 +30,10 @@ import type {
   DeleteCardResult,
   CancelBillingParams,
   CancelBillingResult,
+  PreauthConfirmParams,
+  PreauthConfirmResult,
+  ClientInfoParams,
+  ClientInfoResult,
 } from '../types/bancard.types.js';
 
 // ─── Error personalizado ──────────────────────────────────────────────────────
@@ -293,6 +297,55 @@ export class BancardService {
       extendedResponseDescription: operation.extended_response_description,
       status: operation.response_code === '00' ? 'approved' : 'rejected',
       rawOperation: operation,
+    };
+  }
+  // ─── Facturación Electrónica (TAXIT) ──────────────────────────────────────
+
+  /**
+   * Obtiene la Razón Social y Correo de un cliente dado su RUC, 
+   * a través del servicio integrado de Facturación Electrónica (TAXIT).
+   */
+  async getClientInfo(params: ClientInfoParams): Promise<ClientInfoResult> {
+    const bancardResponse = await this.adapter.getClientInfo(params);
+
+    if (bancardResponse.status !== 'success') {
+      throw new BancardApiError(
+        'Error al obtener información del cliente con Bancard/TAXIT.',
+        bancardResponse,
+        bancardResponse.messages ?? [],
+      );
+    }
+
+    return {
+      status: bancardResponse.status,
+      client: (bancardResponse.client as any) ?? null,
+      messages: bancardResponse.messages ?? [],
+      rawResponse: bancardResponse,
+    };
+  }
+
+  // ─── Preautorizaciones ──────────────────────────────────────────────────────
+
+  /**
+   * Confirma una preautorización (para efectuar el cobro final y opcionalmente 
+   * generar factura electrónica).
+   */
+  async preauthorizationConfirm(params: PreauthConfirmParams): Promise<PreauthConfirmResult> {
+    const bancardResponse = await this.adapter.preauthorizationConfirm(params);
+
+    if (bancardResponse.status !== 'success') {
+      throw new BancardApiError(
+        'Error al confirmar la preautorización con Bancard.',
+        bancardResponse,
+        bancardResponse.messages ?? [],
+      );
+    }
+
+    return {
+      status: bancardResponse.status,
+      confirmation: (bancardResponse.confirmation as any) ?? null,
+      messages: bancardResponse.messages ?? [],
+      rawResponse: bancardResponse,
     };
   }
 }

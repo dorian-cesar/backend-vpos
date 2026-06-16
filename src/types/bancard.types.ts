@@ -96,6 +96,16 @@ export interface CancelBillingParams {
   clientRuc: string;
 }
 
+export interface PreauthConfirmParams {
+  shopProcessId: number | string;
+  amount?: number | string;
+  billing?: BancardBilling;
+}
+
+export interface ClientInfoParams {
+  clientRuc: string;
+}
+
 // ─── Respuestas crudas de la API de Bancard ───────────────────────────────
 
 export interface BancardRawResponse {
@@ -138,6 +148,8 @@ export interface IBancardAdapter {
   charge(params: ChargeParams): Promise<BancardRawResponse>;
   deleteCard(params: DeleteCardParams): Promise<BancardRawResponse>;
   cancelBilling(params: CancelBillingParams): Promise<BancardRawResponse>;
+  preauthorizationConfirm(params: PreauthConfirmParams): Promise<BancardRawResponse>;
+  getClientInfo(params: ClientInfoParams): Promise<BancardRawResponse>;
   getIframeUrl(processId: string): string;
   getSdkUrl(): string;
   getEnvironment(): string;
@@ -202,6 +214,20 @@ export interface CancelBillingResult {
   rawResponse: BancardRawResponse;
 }
 
+export interface PreauthConfirmResult {
+  status: string;
+  confirmation: BancardConfirmation | null;
+  messages: BancardMessage[];
+  rawResponse: BancardRawResponse;
+}
+
+export interface ClientInfoResult {
+  status: string;
+  client?: { name: string; email: string } | null;
+  messages?: BancardMessage[];
+  rawResponse: BancardRawResponse;
+}
+
 // ─── Webhook de confirmación de Bancard ──────────────────────────────────
 
 export interface BancardWebhookPayload {
@@ -249,7 +275,9 @@ export type PagoSimpleAction =
   | 'list-cards'    // Listar tarjetas catastradas de un usuario
   | 'charge'        // Pago con tarjeta guardada (alias_token)
   | 'delete-card'   // Eliminar una tarjeta catastrada
-  | 'cancel-billing';// Cancelar factura electrónica
+  | 'cancel-billing'// Cancelar factura electrónica
+  | 'preauth-confirm' // Confirmar preautorización
+  | 'client-info';  // Consultar datos de cliente por RUC
 
 export interface PagoSimpleRequest {
   // ─── Discriminador (siempre requerido) ─────────────────────────────────

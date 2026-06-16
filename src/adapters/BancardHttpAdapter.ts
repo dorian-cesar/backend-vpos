@@ -21,6 +21,8 @@ import {
   generateChargeToken,
   generateDeleteCardToken,
   generateCancelBillingToken,
+  generatePreauthConfirmToken,
+  generateClientInfoToken,
 } from '../utils/tokenGenerator.js';
 import { BancardStrategy } from '../strategies/BancardStrategy.js';
 import type {
@@ -35,6 +37,8 @@ import type {
   ChargeParams,
   DeleteCardParams,
   CancelBillingParams,
+  PreauthConfirmParams,
+  ClientInfoParams,
   IBancardAdapter,
 } from '../types/bancard.types.js';
 
@@ -510,6 +514,85 @@ export class BancardHttpAdapter implements IBancardAdapter {
   }
 
   // ─── Helpers públicos ──────────────────────────────────────────────────────
+
+  async getClientInfo(params: ClientInfoParams): Promise<BancardRawResponse> {
+    const { clientRuc } = params;
+    const privateKey = this.strategy.getPrivateKey();
+    const publicKey = this.strategy.getPublicKey();
+    const token = generateClientInfoToken(privateKey);
+
+    const url = this.strategy.buildEndpointUrl(bancardConfig.apiPaths.clientInfo);
+
+    const requestBody = {
+      public_key: publicKey,
+      operation: {
+        token,
+        client_ruc: clientRuc,
+      },
+    };
+
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('[BancardAdapter] ► billing/client_info REQUEST:');
+    console.log('  URL Bancard:', url);
+    console.log('  Payload:', JSON.stringify(requestBody, null, 2));
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+    const response = await this.httpClient.post<BancardRawResponse>(url, requestBody);
+
+    console.log('[BancardAdapter] ◄ billing/client_info RESPONSE (HTTP', response.status, '):');
+    console.log(JSON.stringify(response.data, null, 2));
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+    return response.data;
+  }
+
+  // ─── preauthorizations/confirm ─────────────────────────────────────────────
+
+  async preauthorizationConfirm(params: PreauthConfirmParams): Promise<BancardRawResponse> {
+    const { shopProcessId, amount, billing } = params;
+
+    const privateKey = this.strategy.getPrivateKey();
+    const publicKey = this.strategy.getPublicKey();
+    const token = generatePreauthConfirmToken(privateKey, shopProcessId);
+
+    const url = this.strategy.buildEndpointUrl(bancardConfig.apiPaths.preauthConfirm);
+
+    const requestBody: Record<string, any> = {
+      public_key: publicKey,
+      operation: {
+        token,
+        shop_process_id: shopProcessId,
+        ...(amount !== undefined && { amount: Number(amount).toFixed(2) }),
+        ...(billing && {
+          billing: {
+            ...billing,
+            details: billing.details.map(detail => ({
+              ...detail,
+              amount: Number(detail.amount).toFixed(2),
+              iva_rate: Number(detail.iva_rate),
+              total_items: Number(detail.total_items),
+            })),
+          },
+        }),
+      },
+    };
+
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('[BancardAdapter] ► preauthorizations/confirm REQUEST:');
+    console.log('  URL Bancard:', url);
+    console.log('  Payload:', JSON.stringify(requestBody, null, 2));
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+    const response = await this.httpClient.post<BancardRawResponse>(url, requestBody);
+
+    console.log('[BancardAdapter] ◄ preauthorizations/confirm RESPONSE (HTTP', response.status, '):');
+    console.log(JSON.stringify(response.data, null, 2));
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+    return response.data;
+  }
+
+  // ─── Getters ───────────────────────────────────────────────────────────────
 
   /** Retorna la URL del iframe de pago para el `process_id` dado. */
   getIframeUrl(processId: string): string {

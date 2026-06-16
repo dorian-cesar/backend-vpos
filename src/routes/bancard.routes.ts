@@ -303,7 +303,7 @@ router.post(
  *             properties:
  *               action:
  *                 type: string
- *                 enum: [single-buy, rollback, confirmation, charge-back, cards-new, list-cards, charge, delete-card, cancel-billing]
+ *                 enum: [single-buy, rollback, confirmation, charge-back, cards-new, list-cards, charge, delete-card, cancel-billing, preauth-confirm, client-info]
  *                 example: "single-buy"
  *                 description: Operación a ejecutar. Determina qué campos adicionales son necesarios.
  *               servicio:
@@ -442,6 +442,16 @@ router.post(
  *                 action: "cancel-billing"
  *                 processId: "aBcD1234"
  *                 clientRuc: "123456-1"
+ *             preauth-confirm:
+ *               summary: Confirmar preautorización
+ *               value:
+ *                 action: "preauth-confirm"
+ *                 processId: "aBcD1234"
+ *             client-info:
+ *               summary: Consultar cliente por RUC
+ *               value:
+ *                 action: "client-info"
+ *                 clientRuc: "123456-1"
  *     responses:
  *       200:
  *         description: Operación ejecutada correctamente. La estructura de `data` varía según el `action`.
@@ -486,8 +496,8 @@ pagoSimpleRouter.post(
   [
     body('action')
       .notEmpty().withMessage('El campo action es requerido.')
-      .isIn(['single-buy', 'rollback', 'confirmation', 'charge-back', 'cards-new', 'list-cards', 'charge', 'delete-card', 'cancel-billing'])
-      .withMessage('action debe ser: single-buy, rollback, confirmation, charge-back, cards-new, list-cards, charge, delete-card o cancel-billing.'),
+      .isIn(['single-buy', 'rollback', 'confirmation', 'charge-back', 'cards-new', 'list-cards', 'charge', 'delete-card', 'cancel-billing', 'preauth-confirm', 'client-info'])
+      .withMessage('action debe ser: single-buy, rollback, confirmation, charge-back, cards-new, list-cards, charge, delete-card, cancel-billing, preauth-confirm o client-info.'),
     servicioValidation(),
     canalValidation(),
     idValidation(),

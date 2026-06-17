@@ -58,7 +58,7 @@ export const initiateSingleBuy = async (
 
   try {
     // shopProcessId se genera SIEMPRE en el backend
-    const shopProcessId = generateShopProcessId();
+    const shopProcessId = generateShopProcessId((req.body as any).canal);
     const { amount, currency, description, ivaAmount, billing, additionalData, returnUrl, cancelUrl } = req.body;
 
     const result = await bancardService.initiateSingleBuy({
@@ -155,7 +155,7 @@ export const pagoSimpleGateway = async (
         }
 
         // shopProcessId se genera SIEMPRE en el backend
-        const shopProcessId = generateShopProcessId();
+        const shopProcessId = generateShopProcessId(canal);
         console.log(`[bancardController] 🔑 shopProcessId generado internamente: ${shopProcessId}`);
 
         // Actualizar auditBase con el shopProcessId real generado
@@ -288,7 +288,7 @@ export const pagoSimpleGateway = async (
         }
 
         // shopProcessId también se genera en el backend para 'charge'
-        const chargeShopProcessId = generateShopProcessId();
+        const chargeShopProcessId = generateShopProcessId(canal);
         console.log(`[bancardController] 🔑 shopProcessId generado para charge: ${chargeShopProcessId}`);
         auditBase.shopProcessId = chargeShopProcessId;
 
@@ -616,7 +616,7 @@ export const pagoSimpleGateway = async (
         }
 
         // shopProcessId no es requerido para client-info, asignamos un dummy
-        auditBase.shopProcessId = generateShopProcessId();
+        auditBase.shopProcessId = generateShopProcessId(canal);
 
         const infoResult = await bancardService.getClientInfo({ clientRuc });
 

@@ -1,35 +1,86 @@
 /**
  * shopProcessIdGenerator.ts
- * Generación centralizada del shopProcessId en el servidor.
+ * Genera un ID único para la transacción que se envía a Bancard en `shop_process_id`.
  *
- * El shopProcessId es un identificador numérico único por transacción que
- * Bancard usa para asociar la operación. Su generación DEBE ocurrir en el
- * backend para garantizar unicidad y evitar manipulación desde el cliente.
+ * Bancard requiere un entero numérico (hasta 15 dígitos).
+ * Implementación de Contador Cíclico sin Cero (Efecto Odómetro) del 1 al 9.
  *
- * Formato: [22][timestamp 8 dígitos][random 5 dígitos] = 15 dígitos
- *
- * Ejemplo:
- *   timestamp epoch (ms) = 1718462800123 → slice(-8) = "00123"  (8 dígitos)
- *   random = 47823
- *   resultado: 22 + 46280012 + 47823 = 224628001247823
+ * Formato: [Prefijo 1 dígito][Odómetro 14 dígitos] = 15 dígitos
+ * Prefijo: 1 (web), 2 (totem), 3 (puntodeventa/custodia)
  */
+
+// Estado del odómetro (arreglo de 14 dígitos, cada uno del 1 al 9)
+// Se inicializa utilizando el tiempo actual para asegurar que tras un reinicio
+// del servidor partamos desde un punto más alto, evitando colisiones a largo plazo.
+let odometer: number[] = [];
+
+function initOdometer() {
+  let q = Date.now() * 10; // Multiplicador para evitar colisiones inmediatas
+  const digits: number[] = [];
+  while (q > 0) {
+    let rem = q % 9;
+    if (rem === 0) {
+      rem = 9;
+      q = Math.floor(q / 9) - 1;
+    } else {
+      q = Math.floor(q / 9);
+    }
+    digits.unshift(rem);
+  }
+  // Asegurar siempre 14 dígitos (rellenamos con 1 a la izquierda si falta)
+  while (digits.length < 14) {
+    digits.unshift(1);
+  }
+  // Si excepcionalmente excede 14 dígitos, truncar a los últimos 14
+  if (digits.length > 14) {
+    odometer = digits.slice(-14);
+  } else {
+    odometer = digits;
+  }
+}
+
+// Inicializar el contador al cargar el módulo
+initOdometer();
 
 /**
- * Genera un shopProcessId único y seguro para una nueva transacción.
- * @returns Número entero de 15 dígitos único por sesión.
+ * Incrementa mecánicamente el odómetro cíclico sin cero (ruedas del 1 al 9).
+ * Acarreo circular: Cuando una rueda llega a 9, pasa a 1 y empuja la siguiente.
  */
-export function generateShopProcessId(): number {
-  const PREFIX = '22'; // 2 dígitos fijos de prefijo del comercio
+function incrementOdometer() {
+  let carry = true;
+  for (let i = odometer.length - 1; i >= 0; i--) {
+    if (carry) {
+      if (odometer[i] === 9) {
+        odometer[i] = 1; // Da la vuelta sin usar cero
+        carry = true;    // "Empuja" a la rueda de la izquierda
+      } else {
+        odometer[i]++;
+        carry = false;
+      }
+    } else {
+      break;
+    }
+  }
+}
 
-  // Últimos 8 dígitos del timestamp en milisegundos (cicla cada ~11.5 días,
-  // combinado con el sufijo random la probabilidad de colisión es despreciable)
-  const timestamp = Date.now().toString().slice(-8);
+/**
+ * Genera un shopProcessId único aplicando el Efecto Odómetro.
+ * @param canal El canal de la transacción para determinar el prefijo.
+ * @returns Número entero de 15 dígitos.
+ */
+export function generateShopProcessId(canal?: string): number {
+  // 1. Determinar el prefijo según el canal (1 dígito)
+  let prefix = '3'; // Por defecto para puntodeventa, custodia, etc.
+  if (canal === 'web') {
+    prefix = '1';
+  } else if (canal === 'totem') {
+    prefix = '2';
+  }
 
-  // Sufijo random de 5 dígitos (00000–99999)
-  const randomPart = Math.floor(Math.random() * 100000)
-    .toString()
-    .padStart(5, '0');
+  // 2. Incrementar el odómetro 1 a 1
+  incrementOdometer();
 
-  const shopProcessIdStr = PREFIX + timestamp + randomPart;
+  // 3. Concatenar prefijo con el odómetro
+  const shopProcessIdStr = prefix + odometer.join('');
   return parseInt(shopProcessIdStr, 10);
 }

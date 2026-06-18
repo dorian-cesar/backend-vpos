@@ -60,8 +60,8 @@ export const initiateSingleBuy = async (
     // shopProcessId se genera SIEMPRE en el backend
     const shopProcessId = generateShopProcessId((req.body as any).canal);
     const { amount, currency, description, billing, additionalData } = req.body;
-    const returnUrl = req.body.returnUrl || req.body.return_url;
-    const cancelUrl = req.body.cancelUrl || req.body.cancel_url;
+    const returnUrl = req.body.returnUrl || (req.body as any).return_url;
+    const cancelUrl = req.body.cancelUrl || (req.body as any).cancel_url;
 
     const result = await bancardService.initiateSingleBuy({
       shopProcessId,
@@ -142,8 +142,8 @@ export const pagoSimpleGateway = async (
       // ── 1. single-buy: iniciar una nueva compra ───────────────────────────
       case 'single-buy': {
         const { amount, currency, description, billing, additionalData } = req.body;
-        const returnUrl = req.body.returnUrl || req.body.return_url;
-        const cancelUrl = req.body.cancelUrl || req.body.cancel_url;
+        const returnUrl = req.body.returnUrl || (req.body as any).return_url;
+        const cancelUrl = req.body.cancelUrl || (req.body as any).cancel_url;
 
         if (!amount || !description) {
           res.status(422).json({
@@ -201,8 +201,8 @@ export const pagoSimpleGateway = async (
       // ── 1.5. cards-new: iniciar catastro de tarjeta ───────────────────────
       case 'cards-new': {
         const { cardId, userId, userCellPhone, userMail } = req.body;
-        const returnUrl = req.body.returnUrl || req.body.return_url;
-        const cancelUrl = req.body.cancelUrl || req.body.cancel_url;
+        const returnUrl = req.body.returnUrl || (req.body as any).return_url;
+        const cancelUrl = req.body.cancelUrl || (req.body as any).cancel_url;
 
         if (!cardId || !userId || !userCellPhone || !userMail) {
           res.status(422).json({

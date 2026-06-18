@@ -23,7 +23,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"action\": \"single-buy\",\n    \"amount\": 25000,\n    \"currency\": \"PYG\",\n    \"description\": \"Compra de Boleto de Custodia\",\n    \"ivaAmount\": 2500,\n    \"billing\": {\n        \"client_ruc\": \"123456-1\",\n        \"client_name\": \"JUAN GONZALEZ\",\n        \"client_email\": \"juan@mail.com\",\n        \"commerce_stamp\": \"12559969\",\n        \"commerce_expedition_point\": \"001\",\n        \"commerce_establishment\": \"002\",\n        \"details\": [\n            {\n                \"description\": \"Boleto 1\",\n                \"amount\": 25000,\n                \"iva_rate\": 10,\n                \"total_items\": 1\n            }\n        ]\n    },\n    \"returnUrl\": \"https://mi-front.com/pago/exitoso\",\n    \"cancelUrl\": \"https://mi-front.com/pago/cancelado\",\n    \"servicio\": \"boletos/custodia\",\n    \"canal\": \"totem/web/puntodeventa\",\n    \"id\": \"BOLETO-EXT-1001\"\n}"
+              "raw": "{\n    \"action\": \"single-buy\",\n    \"amount\": 25000,\n    \"currency\": \"PYG\",\n    \"description\": \"Compra de Boleto de Custodia\",\n    \"ivaAmount\": 2500,\n    \"billing\": {\n        \"client_ruc\": \"123456-1\",\n        \"client_name\": \"JUAN GONZALEZ\",\n        \"client_email\": \"juan@mail.com\",\n        \"commerce_stamp\": \"12559969\",\n        \"commerce_expedition_point\": \"001\",\n        \"commerce_establishment\": \"002\",\n        \"details\": [\n            {\n                \"description\": \"Boleto 1\",\n                \"amount\": 25000,\n                \"iva_rate\": 10,\n                \"total_items\": 1\n            }\n        ]\n    },\n    \"returnUrl\": \"https://mi-front.com/pago/exitoso\",\n    \"cancelUrl\": \"https://mi-front.com/pago/cancelado\",\n    \"servicio\": \"boletos/custodia\",\n    \"canal\": \"web\",\n    \"id\": \"BOLETO-EXT-1001\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/pagosimple",
@@ -51,7 +51,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"action\": \"rollback\",\n    \"processId\": \"aBcD1234\",\n    \"servicio\": \"boletos/custodia\",\n    \"canal\": \"totem/web/puntodeventa\",\n    \"id\": \"BOLETO-EXT-1001\"\n}"
+              "raw": "{\n    \"action\": \"rollback\",\n    \"processId\": \"aBcD1234\",\n    \"servicio\": \"boletos/custodia\",\n    \"canal\": \"web\",\n    \"id\": \"BOLETO-EXT-1001\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/pagosimple",
@@ -79,7 +79,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"action\": \"confirmation\",\n    \"processId\": \"aBcD1234\",\n    \"servicio\": \"boletos/custodia\",\n    \"canal\": \"totem/web/puntodeventa\",\n    \"id\": \"BOLETO-EXT-1001\"\n}"
+              "raw": "{\n    \"action\": \"confirmation\",\n    \"processId\": \"aBcD1234\",\n    \"servicio\": \"boletos/custodia\",\n    \"canal\": \"web\",\n    \"id\": \"BOLETO-EXT-1001\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/pagosimple",
@@ -107,7 +107,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"action\": \"charge-back\",\n    \"processId\": \"aBcD1234\",\n    \"amount\": 25000,\n    \"currency\": \"PYG\",\n    \"servicio\": \"boletos/custodia\",\n    \"canal\": \"totem/web/puntodeventa\",\n    \"id\": \"BOLETO-EXT-1001\"\n}"
+              "raw": "{\n    \"action\": \"charge-back\",\n    \"processId\": \"aBcD1234\",\n    \"amount\": 25000,\n    \"currency\": \"PYG\",\n    \"servicio\": \"boletos/custodia\",\n    \"canal\": \"web\",\n    \"id\": \"BOLETO-EXT-1001\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/pagosimple",
@@ -275,7 +275,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"action\": \"preauth-confirm\",\n    \"processId\": \"aBcD1234\",\n    \"amount\": 25000,\n    \"servicio\": \"boletos/custodia\",\n    \"canal\": \"totem/web/puntodeventa\",\n    \"id\": \"BOLETO-EXT-1001\"\n}"
+              "raw": "{\n    \"action\": \"preauth-confirm\",\n    \"processId\": \"aBcD1234\",\n    \"amount\": 25000,\n    \"servicio\": \"boletos/custodia\",\n    \"canal\": \"web\",\n    \"id\": \"BOLETO-EXT-1001\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/pagosimple",
@@ -303,7 +303,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"action\": \"client-info\",\n    \"clientRuc\": \"123456-1\",\n    \"servicio\": \"boletos/custodia\",\n    \"canal\": \"totem/web/puntodeventa\",\n    \"id\": \"BOLETO-EXT-1001\"\n}"
+              "raw": "{\n    \"action\": \"client-info\",\n    \"clientRuc\": \"123456-1\",\n    \"servicio\": \"boletos/custodia\",\n    \"canal\": \"web\",\n    \"id\": \"BOLETO-EXT-1001\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/pagosimple",
@@ -505,7 +505,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:3000/api",
+      "value": "https://wit-bancard.dev-wit.com/api",
       "type": "string"
     }
   ]

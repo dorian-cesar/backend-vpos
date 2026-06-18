@@ -170,7 +170,6 @@ export interface PagoSimpleLooseDto {
   amount?: number;
   currency?: BancardCurrency;
   description?: string;
-  ivaAmount?: number;
   billing?: BancardBilling;
   additionalData?: string;
   returnUrl?: string;

@@ -42,7 +42,6 @@ export interface SingleBuyParams {
   amount: number | string;
   currency?: BancardCurrency;
   description: string;
-  ivaAmount?: number | string;
   billing?: BancardBilling;
   additionalData?: string;
   returnUrl?: string;

@@ -59,14 +59,13 @@ export const initiateSingleBuy = async (
   try {
     // shopProcessId se genera SIEMPRE en el backend
     const shopProcessId = generateShopProcessId((req.body as any).canal);
-    const { amount, currency, description, ivaAmount, billing, additionalData, returnUrl, cancelUrl } = req.body;
+    const { amount, currency, description, billing, additionalData, returnUrl, cancelUrl } = req.body;
 
     const result = await bancardService.initiateSingleBuy({
       shopProcessId,
       amount,
       currency,
       description,
-      ivaAmount,
       billing,
       additionalData,
       returnUrl,
@@ -140,7 +139,7 @@ export const pagoSimpleGateway = async (
 
       // ── 1. single-buy: iniciar una nueva compra ───────────────────────────
       case 'single-buy': {
-        const { amount, currency, description, ivaAmount, billing, additionalData, returnUrl, cancelUrl } = req.body;
+        const { amount, currency, description, billing, additionalData, returnUrl, cancelUrl } = req.body;
 
         if (!amount || !description) {
           res.status(422).json({
@@ -174,7 +173,6 @@ export const pagoSimpleGateway = async (
           amount,
           currency,
           description,
-          ivaAmount,
           billing,
           additionalData,
           returnUrl,

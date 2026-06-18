@@ -332,10 +332,6 @@ router.post(
  *                 maxLength: 50
  *                 example: "Compra de Boleto"
  *                 description: Requerido solo para single-buy.
- *               ivaAmount:
- *                 type: number
- *                 example: 1033.00
- *                 description: Opcional. Monto del IVA de la factura.
  *               billing:
  *                 type: object
  *                 description: Opcional. Información para Factura Electrónica.
@@ -372,7 +368,6 @@ router.post(
  *                 amount: 25000.00
  *                 currency: "PYG"
  *                 description: "Compra de Boleto"
- *                 ivaAmount: 2500.00
  *                 billing:
  *                   client_ruc: "123456-1"
  *                   client_name: "JUAN GONZALEZ"
@@ -380,7 +375,7 @@ router.post(
  *                   details:
  *                     - description: "Boleto 1"
  *                       amount: 25000.00
- *                       iva_rate: 10
+ *                       iva_rate: 0
  *                       total_items: 1
  *                 returnUrl: "https://mi-front.com/pago/exitoso"
  *                 cancelUrl: "https://mi-front.com/pago/cancelado"

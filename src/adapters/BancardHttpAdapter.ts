@@ -125,8 +125,8 @@ export class BancardHttpAdapter implements IBancardAdapter {
         amount: formattedAmount,
         additional_data: additionalData ?? '',
         description: description.substring(0, 50),
-        return_url: returnUrl ?? bancardConfig.returnUrl,
-        cancel_url: cancelUrl ?? bancardConfig.cancelUrl,
+        return_url: returnUrl || bancardConfig.returnUrl,
+        cancel_url: cancelUrl || bancardConfig.cancelUrl,
         ...(billing && {
           billing: {
             ...billing,
@@ -300,8 +300,8 @@ export class BancardHttpAdapter implements IBancardAdapter {
         user_id: userId,
         user_cell_phone: userCellPhone,
         user_mail: userMail,
-        return_url: returnUrl ?? bancardConfig.returnUrl,
-        cancel_url: cancelUrl ?? bancardConfig.cancelUrl,
+        return_url: returnUrl || bancardConfig.returnUrl,
+        cancel_url: cancelUrl || bancardConfig.cancelUrl,
       },
     };
 

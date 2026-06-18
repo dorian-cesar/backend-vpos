@@ -190,6 +190,7 @@ export const pagoSimpleGateway = async (
           message: 'Compra iniciada exitosamente.',
           data: {
             processId: singleBuyResult.processId,
+            shopProcessId: shopProcessId,
             iframeUrl: singleBuyResult.iframeUrl,
             sdkUrl: singleBuyResult.sdkUrl,
             environment: singleBuyResult.environment,

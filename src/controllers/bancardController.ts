@@ -852,14 +852,8 @@ export const confirmWebhook = async (req: Request<ParamsDictionary, unknown, Ban
       invoiceNumber: confirmation.electronicBillNumber,
     });
 
-    res.status(200).json({
-      status: confirmation.status,
-      data: {
-        shopProcessId: confirmation.shopProcessId,
-        processed: true,
-        rawResponse: confirmation.rawOperation
-      },
-    });
+    // Bancard requires strictly {"status": "success"} to acknowledge the webhook
+    res.status(200).json({ status: 'success' });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('[bancardController] Error en webhook:', message);

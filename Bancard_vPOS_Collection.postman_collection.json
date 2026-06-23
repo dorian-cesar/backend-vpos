@@ -509,6 +509,138 @@
           "response": []
         },
         {
+          "name": "Catastro de Tarjeta (cards/new Puro)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"cardId\": 999123,\n    \"userId\": 1,\n    \"userCellPhone\": \"0981123456\",\n    \"userMail\": \"test@mail.com\",\n    \"returnUrl\": \"https://mi-front.com/catastro/exitoso\",\n    \"cancelUrl\": \"https://mi-front.com/catastro/cancelado\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bancard/cards/new",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bancard",
+                "cards",
+                "new"
+              ]
+            },
+            "description": "Inicia el catastro de forma directa (pura)."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Tarjetas (list-cards Puro)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bancard/users/1/cards",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bancard",
+                "users",
+                "1",
+                "cards"
+              ]
+            },
+            "description": "Lista tarjetas de forma directa (pura)."
+          },
+          "response": []
+        },
+        {
+          "name": "Pagar con Alias (charge Puro)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"amount\": 15000,\n    \"description\": \"Pago con alias\",\n    \"aliasToken\": \"alias-token-valido-123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bancard/charge",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bancard",
+                "charge"
+              ]
+            },
+            "description": "Cobra con alias de forma directa (pura)."
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar Tarjeta (delete-card Puro)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bancard/users/1/cards/alias-token-valido-123",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bancard",
+                "users",
+                "1",
+                "cards",
+                "alias-token-valido-123"
+              ]
+            },
+            "description": "Elimina tarjeta de forma directa (pura)."
+          },
+          "response": []
+        },
+        {
+          "name": "Confirmar Preautorización (preauth-confirm Puro)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"processId\": \"aBcD1234\",\n    \"amount\": 25000\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bancard/preauthorization/confirm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bancard",
+                "preauthorization",
+                "confirm"
+              ]
+            },
+            "description": "Confirma preautorización de forma directa (pura)."
+          },
+          "response": []
+        },
+        {
           "name": "Simular Webhook Bancard (Confirm)",
           "request": {
             "method": "POST",

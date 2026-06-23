@@ -903,6 +903,114 @@ export const cancelBillingPure = async (req: Request, res: Response): Promise<vo
   }
 };
 
+export const cardsNewPure = async (req: Request, res: Response): Promise<void> => {
+  if (!checkValidation(req, res)) return;
+  try {
+    const { cardId, userId, userCellPhone, userMail, returnUrl, cancelUrl } = req.body;
+    const result = await bancardService.initiateCardsNew({
+      cardId,
+      userId,
+      userCellPhone,
+      userMail,
+      returnUrl,
+      cancelUrl
+    });
+    res.status(200).json({
+      status: 'success',
+      message: 'Proceso de catastro iniciado.',
+      data: result,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
+    console.error('[bancardController] cardsNewPure:', message);
+    res.status(500).json({ status: 'error', message: 'Error al iniciar catastro de tarjeta.', detail: message });
+  }
+};
+
+export const listCardsPure = async (req: Request, res: Response): Promise<void> => {
+  if (!checkValidation(req, res)) return;
+  try {
+    const { userId } = req.params; // from url params
+    const result = await bancardService.listCards(Number(userId));
+    res.status(200).json({
+      status: 'success',
+      message: 'Tarjetas listadas.',
+      data: result,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
+    console.error('[bancardController] listCardsPure:', message);
+    res.status(500).json({ status: 'error', message: 'Error al listar tarjetas.', detail: message });
+  }
+};
+
+export const chargePure = async (req: Request, res: Response): Promise<void> => {
+  if (!checkValidation(req, res)) return;
+  try {
+    const { amount, currency, description, aliasToken, additionalData, numberOfPayments } = req.body;
+    const chargeShopProcessId = generateShopProcessId('pure-charge');
+    const result = await bancardService.charge({
+      shopProcessId: chargeShopProcessId,
+      amount,
+      currency,
+      description,
+      aliasToken,
+      additionalData,
+      numberOfPayments
+    });
+    res.status(200).json({
+      status: 'success',
+      message: 'Pago con tarjeta guardada procesado.',
+      data: result,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
+    console.error('[bancardController] chargePure:', message);
+    res.status(500).json({ status: 'error', message: 'Error al procesar pago con alias.', detail: message });
+  }
+};
+
+export const deleteCardPure = async (req: Request, res: Response): Promise<void> => {
+  if (!checkValidation(req, res)) return;
+  try {
+    const { userId, aliasToken } = req.params;
+    const result = await bancardService.deleteCard({
+      userId: Number(userId),
+      aliasToken
+    });
+    res.status(200).json({
+      status: 'success',
+      message: 'Tarjeta eliminada.',
+      data: result,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
+    console.error('[bancardController] deleteCardPure:', message);
+    res.status(500).json({ status: 'error', message: 'Error al eliminar tarjeta.', detail: message });
+  }
+};
+
+export const preauthConfirmPure = async (req: Request, res: Response): Promise<void> => {
+  if (!checkValidation(req, res)) return;
+  try {
+    const { shopProcessId, amount, billing } = req.body;
+    const result = await bancardService.preauthorizationConfirm({
+      shopProcessId,
+      amount,
+      billing
+    });
+    res.status(200).json({
+      status: 'success',
+      message: 'Preautorización confirmada.',
+      data: result,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
+    console.error('[bancardController] preauthConfirmPure:', message);
+    res.status(500).json({ status: 'error', message: 'Error al confirmar preautorización.', detail: message });
+  }
+};
+
 // ─── 6. GET /api/bancard/health ──────────────────────────────────────────
 
 export const healthCheck = (_req: Request, res: Response): void => {

@@ -17,6 +17,11 @@ import {
   paymentCancelHandler,
   getClientInfoPure,
   cancelBillingPure,
+  cardsNewPure,
+  listCardsPure,
+  chargePure,
+  deleteCardPure,
+  preauthConfirmPure,
 } from '../controllers/bancardController.js';
 
 const router = Router();
@@ -735,6 +740,68 @@ router.post('/client-info', [body('clientRuc').notEmpty().withMessage('clientRuc
  *         description: Error al cancelar
  */
 router.post('/cancel-billing', [shopProcessIdBodyValidation()], cancelBillingPure);
+
+/**
+ * @swagger
+ * /api/bancard/cards/new:
+ *   post:
+ *     summary: Iniciar catastro de tarjeta (pura)
+ *     tags: [Bancard Operations]
+ */
+router.post('/cards/new', [
+  body('cardId').notEmpty().isInt(),
+  body('userId').notEmpty().isInt(),
+  body('userCellPhone').notEmpty().isString(),
+  body('userMail').notEmpty().isEmail(),
+], cardsNewPure);
+
+/**
+ * @swagger
+ * /api/bancard/users/{userId}/cards:
+ *   get:
+ *     summary: Listar tarjetas catastradas de un usuario (pura)
+ *     tags: [Bancard Operations]
+ */
+router.get('/users/:userId/cards', [
+  param('userId').notEmpty().isInt(),
+], listCardsPure);
+
+/**
+ * @swagger
+ * /api/bancard/charge:
+ *   post:
+ *     summary: Cobrar con alias token (pura)
+ *     tags: [Bancard Operations]
+ */
+router.post('/charge', [
+  amountValidation(),
+  body('description').notEmpty().isString(),
+  body('aliasToken').notEmpty().isString(),
+], chargePure);
+
+/**
+ * @swagger
+ * /api/bancard/users/{userId}/cards/{aliasToken}:
+ *   delete:
+ *     summary: Eliminar tarjeta catastrada (pura)
+ *     tags: [Bancard Operations]
+ */
+router.delete('/users/:userId/cards/:aliasToken', [
+  param('userId').notEmpty().isInt(),
+  param('aliasToken').notEmpty().isString(),
+], deleteCardPure);
+
+/**
+ * @swagger
+ * /api/bancard/preauthorization/confirm:
+ *   post:
+ *     summary: Confirmar preautorización (pura)
+ *     tags: [Bancard Operations]
+ */
+router.post('/preauthorization/confirm', [
+  body('processId').notEmpty().isString(),
+  amountValidation(),
+], preauthConfirmPure);
 
 /**
  * @swagger

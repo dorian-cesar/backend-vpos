@@ -867,6 +867,42 @@ export const confirmWebhook = async (req: Request<ParamsDictionary, unknown, Ban
   }
 };
 
+// ─── 4.5. Operaciones Puras adicionales ───────────────────────────────────
+
+export const getClientInfoPure = async (req: Request, res: Response): Promise<void> => {
+  if (!checkValidation(req, res)) return;
+  try {
+    const { clientRuc } = req.body;
+    const result = await bancardService.getClientInfo({ clientRuc });
+    res.status(200).json({
+      status: 'success',
+      message: 'Datos de cliente obtenidos.',
+      data: result,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
+    console.error('[bancardController] getClientInfoPure:', message);
+    res.status(500).json({ status: 'error', message: 'Error al consultar cliente.', detail: message });
+  }
+};
+
+export const cancelBillingPure = async (req: Request, res: Response): Promise<void> => {
+  if (!checkValidation(req, res)) return;
+  try {
+    const { shopProcessId } = req.body;
+    const result = await bancardService.cancelBilling({ shopProcessId });
+    res.status(200).json({
+      status: 'success',
+      message: 'Operación de cancelación procesada.',
+      data: result,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
+    console.error('[bancardController] cancelBillingPure:', message);
+    res.status(500).json({ status: 'error', message: 'Error al cancelar factura.', detail: message });
+  }
+};
+
 // ─── 6. GET /api/bancard/health ──────────────────────────────────────────
 
 export const healthCheck = (_req: Request, res: Response): void => {

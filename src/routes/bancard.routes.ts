@@ -15,6 +15,8 @@ import {
   healthCheck,
   paymentSuccessHandler,
   paymentCancelHandler,
+  getClientInfoPure,
+  cancelBillingPure,
 } from '../controllers/bancardController.js';
 
 const router = Router();
@@ -681,6 +683,58 @@ router.post(
   [shopProcessIdBodyValidation(), amountValidation(), currencyValidation()],
   chargeBack,
 );
+
+/**
+ * @swagger
+ * /api/bancard/client-info:
+ *   post:
+ *     summary: Consultar datos de cliente por RUC de manera directa (pura)
+ *     tags: [Bancard Operations]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - clientRuc
+ *             properties:
+ *               clientRuc:
+ *                 type: string
+ *                 example: "123456-1"
+ *     responses:
+ *       200:
+ *         description: Datos obtenidos correctamente.
+ *       500:
+ *         description: Error al consultar
+ */
+router.post('/client-info', [body('clientRuc').notEmpty().withMessage('clientRuc es requerido.')], getClientInfoPure);
+
+/**
+ * @swagger
+ * /api/bancard/cancel-billing:
+ *   post:
+ *     summary: Cancelar factura electrónica de manera directa (pura)
+ *     tags: [Bancard Operations]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - shopProcessId
+ *             properties:
+ *               shopProcessId:
+ *                 type: integer
+ *                 example: 102
+ *     responses:
+ *       200:
+ *         description: Cancelación procesada.
+ *       500:
+ *         description: Error al cancelar
+ */
+router.post('/cancel-billing', [shopProcessIdBodyValidation()], cancelBillingPure);
 
 /**
  * @swagger

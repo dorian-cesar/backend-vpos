@@ -451,6 +451,64 @@
           "response": []
         },
         {
+          "name": "Consultar Datos de Cliente (Client Info Puro)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"clientRuc\": \"123456-1\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bancard/client-info",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bancard",
+                "client-info"
+              ]
+            },
+            "description": "Consulta directa (pura) de datos de cliente por RUC."
+          },
+          "response": []
+        },
+        {
+          "name": "Cancelar Factura (Cancel Billing Puro)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"shopProcessId\": 103\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bancard/cancel-billing",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bancard",
+                "cancel-billing"
+              ]
+            },
+            "description": "Cancelar factura de forma directa (pura) mediante shopProcessId."
+          },
+          "response": []
+        },
+        {
           "name": "Simular Webhook Bancard (Confirm)",
           "request": {
             "method": "POST",

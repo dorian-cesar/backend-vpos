@@ -514,34 +514,23 @@ export const pagoSimpleGateway = async (
 
       // ── 5. cancel-billing: cancelar una factura electrónica generada ──────
       case 'cancel-billing': {
-        const { processId, clientRuc } = req.body;
+        const { shopProcessId } = req.body;
 
-        if (!processId || !clientRuc) {
+        if (!shopProcessId) {
           res.status(422).json({
             status: 'error',
             message: 'Datos de entrada inválidos.',
             errors: [
-              ...(!processId ? [{ field: 'processId', message: 'processId es requerido para cancel-billing.' }] : []),
-              ...(!clientRuc ? [{ field: 'clientRuc', message: 'clientRuc es requerido para cancel-billing.' }] : []),
+              ...(!shopProcessId ? [{ field: 'shopProcessId', message: 'shopProcessId es requerido para cancel-billing.' }] : []),
             ],
           });
           return;
         }
 
-        // Resolver shopProcessId desde la BD de auditoría
-        const cancelBillingShopId = await PagoSimpleAudit.lookupShopProcessId(processId);
-        if (!cancelBillingShopId) {
-          res.status(422).json({
-            status: 'error',
-            message: `No se encontró un shopProcessId asociado al processId "${processId}". Verifique que la transacción fue iniciada correctamente.`,
-          });
-          return;
-        }
+        console.log(`[bancardController] 🔍 Cancel-billing: shopProcessId=${shopProcessId}`);
+        auditBase.shopProcessId = Number(shopProcessId);
 
-        console.log(`[bancardController] 🔍 Cancel-billing: processId=${processId} → shopProcessId=${cancelBillingShopId}`);
-        auditBase.shopProcessId = cancelBillingShopId;
-
-        const cancelBillingResult = await bancardService.cancelBilling({ shopProcessId: cancelBillingShopId, clientRuc });
+        const cancelBillingResult = await bancardService.cancelBilling({ shopProcessId });
         result = cancelBillingResult;
 
         responseBody = {
@@ -549,7 +538,7 @@ export const pagoSimpleGateway = async (
           action,
           message: cancelBillingResult.status === 'success' ? 'Factura electrónica cancelada exitosamente.' : 'Error al cancelar la factura electrónica.',
           data: {
-            processId,
+            shopProcessId,
             status: cancelBillingResult.status,
             messages: cancelBillingResult.messages,
           },

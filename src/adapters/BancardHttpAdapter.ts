@@ -478,7 +478,7 @@ export class BancardHttpAdapter implements IBancardAdapter {
    * Cancela una factura electrónica generada.
    */
   async cancelBilling(params: CancelBillingParams): Promise<BancardRawResponse> {
-    const { shopProcessId, clientRuc } = params;
+    const { shopProcessId } = params;
 
     const privateKey = this.strategy.getPrivateKey();
     const publicKey = this.strategy.getPublicKey();
@@ -491,7 +491,6 @@ export class BancardHttpAdapter implements IBancardAdapter {
       operation: {
         token,
         shop_process_id: shopProcessId,
-        client_ruc: clientRuc,
       },
     };
 

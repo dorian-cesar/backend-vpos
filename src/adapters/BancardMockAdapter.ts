@@ -175,7 +175,7 @@ export class BancardMockAdapter implements IBancardAdapter {
 
   async cancelBilling(params: CancelBillingParams): Promise<BancardRawResponse> {
     await this._delay();
-    console.log(`[BancardMockAdapter] 📄 Simulando cancelBilling para shopProcessId: ${params.shopProcessId} y clientRuc: ${params.clientRuc}`);
+    console.log(`[BancardMockAdapter] 📄 Simulando cancelBilling para shopProcessId: ${params.shopProcessId}`);
     return {
       status: 'success',
       messages: [

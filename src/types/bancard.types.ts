@@ -92,7 +92,6 @@ export interface DeleteCardParams {
 
 export interface CancelBillingParams {
   shopProcessId: number | string;
-  clientRuc: string;
 }
 
 export interface PreauthConfirmParams {

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bancard vPOS - Panel de Pruebas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos base premium */
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8 flex flex-col gap-8">
+    <header class="text-center">
+        <h1 class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
+            Bancard vPOS Tester
+        </h1>
+        <p class="text-slate-400 mt-2">Pruebas de Facturación Electrónica y Single Buy</p>
+    </header>
+
+    <main class="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- Controles -->
+        <div class="flex flex-col gap-6">
+            
+            <!-- Client Info -->
+            <section class="glass-panel rounded-xl p-6 shadow-xl">
+                <h2 class="text-xl font-semibold mb-4 text-blue-300">1. Consultar Cliente (client_info)</h2>
+                <div class="flex gap-4">
+                    <input type="text" id="clientRuc" value="80000000-1" placeholder="Ej: 80000000-1" 
+                           class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-400 transition-colors">
+                    <button onclick="testClientInfo()" 
+                            class="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-lg font-medium transition-colors">
+                        Consultar RUC
+                    </button>
+                </div>
+            </section>
+
+            <!-- Single Buy -->
+            <section class="glass-panel rounded-xl p-6 shadow-xl">
+                <h2 class="text-xl font-semibold mb-4 text-emerald-300">2. Iniciar Compra (single-buy)</h2>
+                <div class="flex flex-col gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">RUC del Cliente</label>
+                        <input type="text" id="billingRuc" value="123456-7" placeholder="Ej: 123456-7" 
+                               class="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 focus:outline-none focus:border-emerald-400 transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Nombre o Razón Social</label>
+                        <input type="text" id="billingName" value="JUAN GONZALEZ" placeholder="Ej: JUAN GONZALEZ" 
+                               class="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 focus:outline-none focus:border-emerald-400 transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Correo Electrónico</label>
+                        <input type="email" id="billingEmail" value="juangonzalez@mail.com.py" placeholder="Ej: juan@mail.com.py" 
+                               class="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 focus:outline-none focus:border-emerald-400 transition-colors">
+                    </div>
+                </div>
+                <button onclick="testSingleBuy()" 
+                        class="w-full bg-emerald-600 hover:bg-emerald-500 py-3 rounded-lg font-medium transition-colors text-lg shadow-lg shadow-emerald-900/50">
+                    Iniciar Compra Simple
+                </button>
+            </section>
+
+            <!-- Cancel Billing -->
+            <section class="glass-panel rounded-xl p-6 shadow-xl">
+                <h2 class="text-xl font-semibold mb-4 text-red-400">3. Anular Factura (cancel-billing)</h2>
+                <div class="flex gap-4">
+                    <input type="text" id="shopProcessId" placeholder="shopProcessId" 
+                           class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 focus:outline-none focus:border-red-400 transition-colors">
+                    <button onclick="testCancelBilling()" 
+                            class="bg-red-600 hover:bg-red-500 px-6 py-2 rounded-lg font-medium transition-colors">
+                        Anular
+                    </button>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- Resultados e Iframe -->
+        <div class="flex flex-col gap-6">
+            
+            <!-- Iframe Container -->
+            <section class="glass-panel rounded-xl p-6 shadow-xl flex-1 flex flex-col min-h-[400px]">
+                <h2 class="text-xl font-semibold mb-4 text-slate-300">Iframe Bancard</h2>
+                <div id="iframe-container" class="flex-1 bg-slate-900 rounded-lg border border-slate-700 flex items-center justify-center overflow-hidden">
+                    <span class="text-slate-500">El iframe de pago aparecerá aquí</span>
+                </div>
+            </section>
+
+            <!-- Logs -->
+            <section class="glass-panel rounded-xl p-6 shadow-xl h-64 flex flex-col">
+                <h2 class="text-xl font-semibold mb-2 text-slate-300">Logs (JSON Response)</h2>
+                <pre id="logs" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg p-4 overflow-auto text-sm font-mono text-green-400"></pre>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Script de Bancard (Staging) -->
+    <script src="https://vpos.infonet.com.py:8888/checkout/javascript/dist/bancard-checkout-4.0.0.js"></script>
+
+    <script>
+        const API_BASE = '/api/pagosimple';
+
+        function logOutput(data) {
+            const logsEl = document.getElementById('logs');
+            logsEl.textContent = JSON.stringify(data, null, 2);
+        }
+
+        async function testClientInfo() {
+            const ruc = document.getElementById('clientRuc').value;
+            if (!ruc) return alert('Ingresa un RUC');
+            
+            logOutput({ status: 'loading', message: 'Consultando...' });
+            
+            try {
+                const res = await fetch(API_BASE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'client-info',
+                        clientRuc: ruc
+                    })
+                });
+                const data = await res.json();
+                logOutput(data);
+            } catch (err) {
+                logOutput({ error: err.message });
+            }
+        }
+
+        async function testSingleBuy() {
+            logOutput({ status: 'loading', message: 'Iniciando compra...' });
+            
+            const ruc = document.getElementById('billingRuc').value;
+            const name = document.getElementById('billingName').value;
+            const email = document.getElementById('billingEmail').value;
+            
+            if (!ruc || !name || !email) {
+                return alert('Por favor, completa todos los datos de facturación (RUC, Nombre y Email)');
+            }
+            
+            const payload = {
+                action: 'single-buy',
+                servicio: 'Tester Panel',
+                canal: 'web',
+                id: 'TEST-FRONT-' + Date.now(),
+                amount: 15000,
+                currency: 'PYG',
+                description: 'Compra de prueba con Factura Electronica',
+                returnUrl: window.location.origin + '/confirm_payment',
+                cancelUrl: window.location.origin + '/confirm_payment',
+                billing: {
+                    client_ruc: ruc,
+                    client_name: name,
+                    client_email: email,
+                    details: [
+                        {
+                            description: 'Item de Prueba Facturacion 10 IVA',
+                            amount: '15000.00',
+                            iva_rate: 10,
+                            total_items: 1
+                        }
+                    ]
+                }
+            };
+
+            try {
+                const res = await fetch(API_BASE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                logOutput(data);
+
+                if (data.status === 'success' && data.data && data.data.processId) {
+                    // Cargar Iframe
+                    const iframeContainer = document.getElementById('iframe-container');
+                    iframeContainer.innerHTML = ''; // Clear
+                    
+                    // Set shopProcessId to cancel input for convenience
+                    document.getElementById('shopProcessId').value = data.data.shopProcessId;
+
+                    // Init Bancard SDK
+                    Bancard.Checkout.createForm('iframe-container', data.data.processId, {
+                        styles: {
+                            "bg-color": "#ffffff",
+                            "font-color": "#333333",
+                            "button-background-color": "#10b981",
+                            "button-text-color": "#ffffff",
+                            "button-border-color": "#10b981"
+                        }
+                    });
+                }
+            } catch (err) {
+                logOutput({ error: err.message });
+            }
+        }
+
+        async function testCancelBilling() {
+            const shopProcessId = document.getElementById('shopProcessId').value;
+            if (!shopProcessId) return alert('Ingresa un shopProcessId');
+            
+            logOutput({ status: 'loading', message: 'Cancelando factura...' });
+            
+            try {
+                const res = await fetch(API_BASE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'cancel-billing',
+                        shopProcessId: shopProcessId
+                    })
+                });
+                const data = await res.json();
+                logOutput(data);
+            } catch (err) {
+                logOutput({ error: err.message });
+            }
+        }
+    </script>
+</body>
+</html>

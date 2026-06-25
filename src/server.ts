@@ -43,6 +43,9 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(requestLogger);
 }
 
+// ─── Archivos Estáticos (Frontend de Pruebas) ─────────────────────────────
+app.use(express.static('public'));
+
 // ─── Rutas ─────────────────────────────────────────────────────────────────
 
 app.get('/', (_req, res) => {

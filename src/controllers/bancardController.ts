@@ -59,7 +59,7 @@ export const initiateSingleBuy = async (
   try {
     // shopProcessId se genera SIEMPRE en el backend
     const shopProcessId = generateShopProcessId((req.body as any).canal);
-    const { amount, currency, description, billing, additionalData } = req.body;
+    const { amount, currency, description, billing, additionalData, preauthorization, zimple } = req.body;
     const returnUrl = req.body.returnUrl || (req.body as any).return_url;
     const cancelUrl = req.body.cancelUrl || (req.body as any).cancel_url;
 
@@ -70,6 +70,8 @@ export const initiateSingleBuy = async (
       description,
       billing,
       additionalData,
+      preauthorization,
+      zimple,
       returnUrl,
       cancelUrl,
     });
@@ -141,7 +143,7 @@ export const pagoSimpleGateway = async (
 
       // ── 1. single-buy: iniciar una nueva compra ───────────────────────────
       case 'single-buy': {
-        const { amount, currency, description, billing, additionalData } = req.body;
+        const { amount, currency, description, billing, additionalData, preauthorization, zimple } = req.body;
         const returnUrl = req.body.returnUrl || (req.body as any).return_url;
         const cancelUrl = req.body.cancelUrl || (req.body as any).cancel_url;
 
@@ -179,6 +181,8 @@ export const pagoSimpleGateway = async (
           description,
           billing,
           additionalData,
+          preauthorization,
+          zimple,
           returnUrl,
           cancelUrl,
         });

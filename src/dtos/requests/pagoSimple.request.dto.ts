@@ -55,6 +55,10 @@ export interface SingleBuyDto extends PagoSimpleBaseDto {
   billing?: BancardBilling;
   /** Datos adicionales. Opcional. */
   additionalData?: string;
+  /** Indica si la transacción es una preautorización (no debita inmediatamente). Opcional. */
+  preauthorization?: boolean;
+  /** Indica si la transacción se realizará vía Zimple. Opcional. */
+  zimple?: boolean;
   /** URL de retorno del iframe de Bancard. Opcional — si no se envía, usa el valor de .env. */
   returnUrl?: string;
   /** URL de cancelación del iframe de Bancard. Opcional — si no se envía, usa el valor de .env. */

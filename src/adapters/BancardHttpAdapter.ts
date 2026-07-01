@@ -105,6 +105,8 @@ export class BancardHttpAdapter implements IBancardAdapter {
       description,
       billing,
       additionalData,
+      preauthorization,
+      zimple,
       returnUrl,
       cancelUrl,
     } = params;
@@ -125,6 +127,8 @@ export class BancardHttpAdapter implements IBancardAdapter {
         amount: formattedAmount,
         additional_data: additionalData ?? '',
         description: description.substring(0, 50),
+        ...(preauthorization ? { preauthorization: 'S' } : {}),
+        ...(zimple ? { zimple: 'S' } : {}),
         return_url: returnUrl || bancardConfig.returnUrl,
         cancel_url: cancelUrl || bancardConfig.cancelUrl,
         ...(billing && {

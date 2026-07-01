@@ -175,6 +175,8 @@ export interface PagoSimpleLooseDto {
   description?: string;
   billing?: BancardBilling;
   additionalData?: string;
+  preauthorization?: boolean;
+  zimple?: boolean;
   returnUrl?: string;
   cancelUrl?: string;
   clientRuc?: string;

@@ -15,7 +15,7 @@ import type { Request, Response } from 'express';
 import type { ParamsDictionary } from 'express-serve-static-core';
 import { validationResult } from 'express-validator';
 import { BancardService, BancardApiError } from '../services/BancardService.js';
-import type { BancardWebhookPayload } from '../types/bancard.types.js';
+import type { BancardWebhookPayload, BancardBilling } from '../types/bancard.types.js';
 import type { ApiErrorResponse, ApiSuccessResponse } from '../types/api.types.js';
 import type { PagoSimpleLooseDto, LegacyRollbackRequestDto, LegacyChargeBackRequestDto, SingleBuyDto } from '../dtos/requests/pagoSimple.request.dto.js';
 import type {
@@ -48,6 +48,17 @@ const checkValidation = (req: Request, res: Response): boolean => {
   return true;
 };
 
+// ─── Helper: valida la sumatoria de los items de facturación ─────────────────
+
+const validateBillingAmounts = (amount: number, billing?: BancardBilling): string | null => {
+  if (!billing || !billing.details || billing.details.length === 0) return null;
+  const totalDetails = billing.details.reduce((sum, detail) => sum + Number(detail.amount), 0);
+  if (Math.abs(Number(amount) - totalDetails) > 0.001) {
+    return `El costo total de los ítems en billing.details (${totalDetails.toFixed(2)}) debe coincidir con el monto principal enviado (${Number(amount).toFixed(2)}).`;
+  }
+  return null;
+};
+
 // ─── 1. POST /api/bancard/single-buy ───────────────────────────────────────
 
 export const initiateSingleBuy = async (
@@ -62,6 +73,17 @@ export const initiateSingleBuy = async (
     const { amount, currency, description, billing, additionalData, preauthorization, zimple } = req.body;
     const returnUrl = req.body.returnUrl || (req.body as any).return_url;
     const cancelUrl = req.body.cancelUrl || (req.body as any).cancel_url;
+
+    const billingError = validateBillingAmounts(Number(amount), billing);
+    if (billingError) {
+      const body: ApiErrorResponse = {
+        status: 'error',
+        message: 'Datos de facturación inválidos.',
+        errors: [{ field: 'billing.details', message: billingError }],
+      };
+      res.status(422).json(body);
+      return;
+    }
 
     const result = await bancardService.initiateSingleBuy({
       shopProcessId,
@@ -155,6 +177,16 @@ export const pagoSimpleGateway = async (
               ...(!amount ? [{ field: 'amount', message: 'amount es requerido para single-buy.' }] : []),
               ...(!description ? [{ field: 'description', message: 'description es requerida para single-buy.' }] : []),
             ],
+          });
+          return;
+        }
+
+        const billingError = validateBillingAmounts(Number(amount), billing);
+        if (billingError) {
+          res.status(422).json({
+            status: 'error',
+            message: 'Datos de facturación inválidos.',
+            errors: [{ field: 'billing.details', message: billingError }],
           });
           return;
         }
@@ -560,6 +592,18 @@ export const pagoSimpleGateway = async (
             errors: [{ field: 'processId', message: 'processId es requerido para preauth-confirm.' }],
           });
           return;
+        }
+
+        if (amount !== undefined) {
+          const billingError = validateBillingAmounts(Number(amount), billing);
+          if (billingError) {
+            res.status(422).json({
+              status: 'error',
+              message: 'Datos de facturación inválidos.',
+              errors: [{ field: 'billing.details', message: billingError }],
+            });
+            return;
+          }
         }
 
         const preauthShopId = await PagoSimpleAudit.lookupShopProcessId(processId);

@@ -120,8 +120,8 @@ export interface DeleteCardDto extends PagoSimpleBaseDto {
 
 export interface CancelBillingDto extends PagoSimpleBaseDto {
   action: 'cancel-billing';
-  /** ID interno de la compra en nuestra BD (shop_process_id). Requerido. */
-  shopProcessId: number | string;
+  /** process_id de Bancard de la transacción. Requerido. */
+  processId: string;
 }
 
 export interface PreauthConfirmDto extends PagoSimpleBaseDto {

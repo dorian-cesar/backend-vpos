@@ -550,23 +550,33 @@ export const pagoSimpleGateway = async (
 
       // ── 5. cancel-billing: cancelar una factura electrónica generada ──────
       case 'cancel-billing': {
-        const { shopProcessId } = req.body;
+        const { processId } = req.body;
 
-        if (!shopProcessId) {
+        if (!processId) {
           res.status(422).json({
             status: 'error',
             message: 'Datos de entrada inválidos.',
             errors: [
-              ...(!shopProcessId ? [{ field: 'shopProcessId', message: 'shopProcessId es requerido para cancel-billing.' }] : []),
+              ...(!processId ? [{ field: 'processId', message: 'processId es requerido para cancel-billing.' }] : []),
             ],
           });
           return;
         }
 
-        console.log(`[bancardController] 🔍 Cancel-billing: shopProcessId=${shopProcessId}`);
-        auditBase.shopProcessId = Number(shopProcessId);
+        // Resolver shopProcessId desde la BD de auditoría
+        const cancelBillingShopId = await PagoSimpleAudit.lookupShopProcessId(processId);
+        if (!cancelBillingShopId) {
+          res.status(422).json({
+            status: 'error',
+            message: `No se encontró un shopProcessId asociado al processId "${processId}". Verifique que la transacción fue iniciada correctamente.`,
+          });
+          return;
+        }
 
-        const cancelBillingResult = await bancardService.cancelBilling({ shopProcessId });
+        console.log(`[bancardController] 🔍 Cancel-billing: processId=${processId} → shopProcessId=${cancelBillingShopId}`);
+        auditBase.shopProcessId = cancelBillingShopId;
+
+        const cancelBillingResult = await bancardService.cancelBilling({ shopProcessId: cancelBillingShopId });
         result = cancelBillingResult;
 
         responseBody = {
@@ -574,7 +584,7 @@ export const pagoSimpleGateway = async (
           action,
           message: cancelBillingResult.status === 'success' ? 'Factura electrónica cancelada exitosamente.' : 'Error al cancelar la factura electrónica.',
           data: {
-            shopProcessId,
+            processId,
             status: cancelBillingResult.status,
             messages: cancelBillingResult.messages,
           },
@@ -937,7 +947,17 @@ export const getClientInfoPure = async (req: Request, res: Response): Promise<vo
 export const cancelBillingPure = async (req: Request, res: Response): Promise<void> => {
   if (!checkValidation(req, res)) return;
   try {
-    const { shopProcessId } = req.body;
+    const { processId } = req.body;
+    const shopProcessId = await PagoSimpleAudit.lookupShopProcessId(processId);
+    
+    if (!shopProcessId) {
+      res.status(422).json({
+        status: 'error',
+        message: `No se encontró un shopProcessId asociado al processId "${processId}".`,
+      });
+      return;
+    }
+
     const result = await bancardService.cancelBilling({ shopProcessId });
     res.status(200).json({
       status: 'success',

@@ -131,7 +131,9 @@
     <script src="https://vpos.infonet.com.py:8888/checkout/javascript/dist/bancard-checkout-4.0.0.js"></script>
 
     <script>
-        const API_BASE = '/api/pagosimple';
+        const API_BASE = window.location.protocol === 'file:' 
+            ? 'http://localhost:3002/api/pagosimple' 
+            : '/api/pagosimple';
 
         function logOutput(data) {
             const logsEl = document.getElementById('logs');

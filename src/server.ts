@@ -48,7 +48,10 @@ app.use(express.static('public'));
 
 // ─── Rutas ─────────────────────────────────────────────────────────────────
 
-app.get('/', (_req, res) => {
+app.get('/', (req, res, next) => {
+  if (req.accepts('html')) {
+    return next();
+  }
   res.json({
     service: 'Bancard vPOS Backend',
     version: '1.0.0',

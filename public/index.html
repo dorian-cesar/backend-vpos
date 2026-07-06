@@ -63,6 +63,13 @@
                         <input type="email" id="billingEmail" value="juangonzalez@mail.com.py" placeholder="Ej: juan@mail.com.py" 
                                class="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 focus:outline-none focus:border-emerald-400 transition-colors">
                     </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Opciones Avanzadas</label>
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="preauthorization" class="w-4 h-4 text-emerald-600 bg-slate-800 border-slate-600 rounded focus:ring-emerald-500 focus:ring-2">
+                            <label for="preauthorization" class="text-sm font-medium text-slate-300">Activar Preautorización</label>
+                        </div>
+                    </div>
                 </div>
                 <button onclick="testSingleBuy()" 
                         class="w-full bg-emerald-600 hover:bg-emerald-500 py-3 rounded-lg font-medium transition-colors text-lg shadow-lg shadow-emerald-900/50">
@@ -74,13 +81,28 @@
             <section class="glass-panel rounded-xl p-6 shadow-xl">
                 <h2 class="text-xl font-semibold mb-4 text-red-400">3. Anular Factura (cancel-billing)</h2>
                 <div class="flex gap-4">
-                    <input type="text" id="shopProcessId" placeholder="shopProcessId" 
+                    <input type="text" id="cancelProcessId" placeholder="processId" 
                            class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 focus:outline-none focus:border-red-400 transition-colors">
                     <button onclick="testCancelBilling()" 
                             class="bg-red-600 hover:bg-red-500 px-6 py-2 rounded-lg font-medium transition-colors">
                         Anular
                     </button>
                 </div>
+            </section>
+
+            <!-- Preauth Confirm -->
+            <section class="glass-panel rounded-xl p-6 shadow-xl mt-6">
+                <h2 class="text-xl font-semibold mb-4 text-amber-400">4. Confirmar Preauth (preauth-confirm)</h2>
+                <div class="flex gap-4 mb-4">
+                    <input type="text" id="preauthProcessId" placeholder="processId" 
+                           class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 focus:outline-none focus:border-amber-400 transition-colors">
+                    <input type="number" id="preauthAmount" placeholder="Monto" value="15000"
+                           class="w-32 bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 focus:outline-none focus:border-amber-400 transition-colors">
+                </div>
+                <button onclick="testPreauthConfirm()" 
+                        class="w-full bg-amber-600 hover:bg-amber-500 py-2 rounded-lg font-medium transition-colors">
+                    Confirmar Preautorización
+                </button>
             </section>
 
         </div>
@@ -144,6 +166,7 @@
             const ruc = document.getElementById('billingRuc').value;
             const name = document.getElementById('billingName').value;
             const email = document.getElementById('billingEmail').value;
+            const isPreauth = document.getElementById('preauthorization').checked;
             
             if (!ruc || !name || !email) {
                 return alert('Por favor, completa todos los datos de facturación (RUC, Nombre y Email)');
@@ -156,6 +179,7 @@
                 id: 'TEST-FRONT-' + Date.now(),
                 amount: 15000,
                 currency: 'PYG',
+                preauthorization: isPreauth,
                 description: 'Compra de prueba con Factura Electronica',
                 returnUrl: window.location.origin + '/confirm_payment',
                 cancelUrl: window.location.origin + '/confirm_payment',
@@ -188,8 +212,11 @@
                     const iframeContainer = document.getElementById('iframe-container');
                     iframeContainer.innerHTML = ''; // Clear
                     
-                    // Set shopProcessId to cancel input for convenience
-                    document.getElementById('shopProcessId').value = data.data.shopProcessId;
+                    // Set processId to cancel/preauth inputs for convenience
+                    document.getElementById('cancelProcessId').value = data.data.processId;
+                    if (document.getElementById('preauthProcessId')) {
+                        document.getElementById('preauthProcessId').value = data.data.processId;
+                    }
 
                     // Init Bancard SDK
                     Bancard.Checkout.createForm('iframe-container', data.data.processId, {
@@ -208,8 +235,8 @@
         }
 
         async function testCancelBilling() {
-            const shopProcessId = document.getElementById('shopProcessId').value;
-            if (!shopProcessId) return alert('Ingresa un shopProcessId');
+            const processId = document.getElementById('cancelProcessId').value;
+            if (!processId) return alert('Ingresa un processId');
             
             logOutput({ status: 'loading', message: 'Cancelando factura...' });
             
@@ -219,7 +246,31 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         action: 'cancel-billing',
-                        shopProcessId: shopProcessId
+                        processId: processId
+                    })
+                });
+                const data = await res.json();
+                logOutput(data);
+            } catch (err) {
+                logOutput({ error: err.message });
+            }
+        }
+
+        async function testPreauthConfirm() {
+            const processId = document.getElementById('preauthProcessId').value;
+            const amount = document.getElementById('preauthAmount').value;
+            if (!processId || !amount) return alert('Ingresa un processId y el monto');
+            
+            logOutput({ status: 'loading', message: 'Confirmando preautorización...' });
+            
+            try {
+                const res = await fetch(API_BASE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'preauth-confirm',
+                        processId: processId,
+                        amount: Number(amount)
                     })
                 });
                 const data = await res.json();

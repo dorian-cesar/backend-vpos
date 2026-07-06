@@ -15,7 +15,7 @@ import type { Request, Response } from 'express';
 import type { ParamsDictionary } from 'express-serve-static-core';
 import { validationResult } from 'express-validator';
 import { BancardService, BancardApiError } from '../services/BancardService.js';
-import type { BancardWebhookPayload } from '../types/bancard.types.js';
+import type { BancardWebhookPayload, BancardBilling } from '../types/bancard.types.js';
 import type { ApiErrorResponse, ApiSuccessResponse } from '../types/api.types.js';
 import type { PagoSimpleLooseDto, LegacyRollbackRequestDto, LegacyChargeBackRequestDto, SingleBuyDto } from '../dtos/requests/pagoSimple.request.dto.js';
 import type {
@@ -48,6 +48,17 @@ const checkValidation = (req: Request, res: Response): boolean => {
   return true;
 };
 
+// ─── Helper: valida la sumatoria de los items de facturación ─────────────────
+
+const validateBillingAmounts = (amount: number, billing?: BancardBilling): string | null => {
+  if (!billing || !billing.details || billing.details.length === 0) return null;
+  const totalDetails = billing.details.reduce((sum, detail) => sum + Number(detail.amount), 0);
+  if (Math.abs(Number(amount) - totalDetails) > 0.001) {
+    return `El costo total de los ítems en billing.details (${totalDetails.toFixed(2)}) debe coincidir con el monto principal enviado (${Number(amount).toFixed(2)}).`;
+  }
+  return null;
+};
+
 // ─── 1. POST /api/bancard/single-buy ───────────────────────────────────────
 
 export const initiateSingleBuy = async (
@@ -59,9 +70,20 @@ export const initiateSingleBuy = async (
   try {
     // shopProcessId se genera SIEMPRE en el backend
     const shopProcessId = generateShopProcessId((req.body as any).canal);
-    const { amount, currency, description, billing, additionalData } = req.body;
+    const { amount, currency, description, billing, additionalData, preauthorization, zimple } = req.body;
     const returnUrl = req.body.returnUrl || (req.body as any).return_url;
     const cancelUrl = req.body.cancelUrl || (req.body as any).cancel_url;
+
+    const billingError = validateBillingAmounts(Number(amount), billing);
+    if (billingError) {
+      const body: ApiErrorResponse = {
+        status: 'error',
+        message: 'Datos de facturación inválidos.',
+        errors: [{ field: 'billing.details', message: billingError }],
+      };
+      res.status(422).json(body);
+      return;
+    }
 
     const result = await bancardService.initiateSingleBuy({
       shopProcessId,
@@ -70,6 +92,8 @@ export const initiateSingleBuy = async (
       description,
       billing,
       additionalData,
+      preauthorization,
+      zimple,
       returnUrl,
       cancelUrl,
     });
@@ -141,7 +165,7 @@ export const pagoSimpleGateway = async (
 
       // ── 1. single-buy: iniciar una nueva compra ───────────────────────────
       case 'single-buy': {
-        const { amount, currency, description, billing, additionalData } = req.body;
+        const { amount, currency, description, billing, additionalData, preauthorization, zimple } = req.body;
         const returnUrl = req.body.returnUrl || (req.body as any).return_url;
         const cancelUrl = req.body.cancelUrl || (req.body as any).cancel_url;
 
@@ -153,6 +177,16 @@ export const pagoSimpleGateway = async (
               ...(!amount ? [{ field: 'amount', message: 'amount es requerido para single-buy.' }] : []),
               ...(!description ? [{ field: 'description', message: 'description es requerida para single-buy.' }] : []),
             ],
+          });
+          return;
+        }
+
+        const billingError = validateBillingAmounts(Number(amount), billing);
+        if (billingError) {
+          res.status(422).json({
+            status: 'error',
+            message: 'Datos de facturación inválidos.',
+            errors: [{ field: 'billing.details', message: billingError }],
           });
           return;
         }
@@ -179,6 +213,8 @@ export const pagoSimpleGateway = async (
           description,
           billing,
           additionalData,
+          preauthorization,
+          zimple,
           returnUrl,
           cancelUrl,
         });
@@ -514,23 +550,33 @@ export const pagoSimpleGateway = async (
 
       // ── 5. cancel-billing: cancelar una factura electrónica generada ──────
       case 'cancel-billing': {
-        const { shopProcessId } = req.body;
+        const { processId } = req.body;
 
-        if (!shopProcessId) {
+        if (!processId) {
           res.status(422).json({
             status: 'error',
             message: 'Datos de entrada inválidos.',
             errors: [
-              ...(!shopProcessId ? [{ field: 'shopProcessId', message: 'shopProcessId es requerido para cancel-billing.' }] : []),
+              ...(!processId ? [{ field: 'processId', message: 'processId es requerido para cancel-billing.' }] : []),
             ],
           });
           return;
         }
 
-        console.log(`[bancardController] 🔍 Cancel-billing: shopProcessId=${shopProcessId}`);
-        auditBase.shopProcessId = Number(shopProcessId);
+        // Resolver shopProcessId desde la BD de auditoría
+        const cancelBillingShopId = await PagoSimpleAudit.lookupShopProcessId(processId);
+        if (!cancelBillingShopId) {
+          res.status(422).json({
+            status: 'error',
+            message: `No se encontró un shopProcessId asociado al processId "${processId}". Verifique que la transacción fue iniciada correctamente.`,
+          });
+          return;
+        }
 
-        const cancelBillingResult = await bancardService.cancelBilling({ shopProcessId });
+        console.log(`[bancardController] 🔍 Cancel-billing: processId=${processId} → shopProcessId=${cancelBillingShopId}`);
+        auditBase.shopProcessId = cancelBillingShopId;
+
+        const cancelBillingResult = await bancardService.cancelBilling({ shopProcessId: cancelBillingShopId });
         result = cancelBillingResult;
 
         responseBody = {
@@ -538,7 +584,7 @@ export const pagoSimpleGateway = async (
           action,
           message: cancelBillingResult.status === 'success' ? 'Factura electrónica cancelada exitosamente.' : 'Error al cancelar la factura electrónica.',
           data: {
-            shopProcessId,
+            processId,
             status: cancelBillingResult.status,
             messages: cancelBillingResult.messages,
           },
@@ -556,6 +602,18 @@ export const pagoSimpleGateway = async (
             errors: [{ field: 'processId', message: 'processId es requerido para preauth-confirm.' }],
           });
           return;
+        }
+
+        if (amount !== undefined) {
+          const billingError = validateBillingAmounts(Number(amount), billing);
+          if (billingError) {
+            res.status(422).json({
+              status: 'error',
+              message: 'Datos de facturación inválidos.',
+              errors: [{ field: 'billing.details', message: billingError }],
+            });
+            return;
+          }
         }
 
         const preauthShopId = await PagoSimpleAudit.lookupShopProcessId(processId);
@@ -889,7 +947,17 @@ export const getClientInfoPure = async (req: Request, res: Response): Promise<vo
 export const cancelBillingPure = async (req: Request, res: Response): Promise<void> => {
   if (!checkValidation(req, res)) return;
   try {
-    const { shopProcessId } = req.body;
+    const { processId } = req.body;
+    const shopProcessId = await PagoSimpleAudit.lookupShopProcessId(processId);
+    
+    if (!shopProcessId) {
+      res.status(422).json({
+        status: 'error',
+        message: `No se encontró un shopProcessId asociado al processId "${processId}".`,
+      });
+      return;
+    }
+
     const result = await bancardService.cancelBilling({ shopProcessId });
     res.status(200).json({
       status: 'success',

@@ -44,6 +44,8 @@ export interface SingleBuyParams {
   description: string;
   billing?: BancardBilling;
   additionalData?: string;
+  preauthorization?: boolean;
+  zimple?: boolean;
   returnUrl?: string;
   cancelUrl?: string;
 }

@@ -504,6 +504,8 @@ pagoSimpleRouter.post(
     body('processId').optional().isString().withMessage('processId debe ser un texto.'),
     body('currency').optional().isIn(['PYG', 'USD']).withMessage('currency debe ser PYG o USD.'),
     body('additionalData').optional().isString(),
+    body('preauthorization').optional().isBoolean().withMessage('preauthorization debe ser booleano.'),
+    body('zimple').optional().isBoolean().withMessage('zimple debe ser booleano.'),
     body('returnUrl').optional().isURL({ require_tld: false }).withMessage('returnUrl debe ser una URL válida.'),
     body('cancelUrl').optional().isURL({ require_tld: false }).withMessage('cancelUrl debe ser una URL válida.'),
     body('description').optional().isString().isLength({ max: 50 }).withMessage('description no puede superar 50 caracteres.'),

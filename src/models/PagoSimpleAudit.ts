@@ -8,7 +8,7 @@ export class PagoSimpleAudit {
    */
   static async initTable(): Promise<void> {
     const auditTable = `
-      CREATE TABLE IF NOT EXISTS pago_simple_audits (
+      CREATE TABLE IF NOT EXISTS vpos_audit (
         id              INT AUTO_INCREMENT PRIMARY KEY,
         action          VARCHAR(50)       DEFAULT NULL COMMENT 'single-buy | rollback | confirmation | charge-back',
         external_id     VARCHAR(255)      DEFAULT NULL COMMENT 'ID externo del frontend (campo id)',
@@ -42,11 +42,11 @@ export class PagoSimpleAudit {
       // Intentar agregar la columna por si la tabla ya existía de versiones anteriores
       try {
         await dbPool.query(`
-          ALTER TABLE pago_simple_audits 
+          ALTER TABLE vpos_audit 
           ADD COLUMN invoice_number VARCHAR(255) DEFAULT NULL COMMENT 'Número de factura electrónica' 
           AFTER status_result;
         `);
-        console.log('[DB] ➕ Columna invoice_number agregada a la tabla pago_simple_audits.');
+        console.log('[DB] ➕ Columna invoice_number agregada a la tabla vpos_audit.');
       } catch (err: any) {
         // Código 1060 es ER_DUP_FIELDNAME (columna ya existe). Ignoramos el error si ya existe.
         if (err.code !== 'ER_DUP_FIELDNAME') {
@@ -54,9 +54,9 @@ export class PagoSimpleAudit {
         }
       }
       
-      console.log('[DB] ✅ Tabla unificada pago_simple_audits verificada/creada.');
+      console.log('[DB] ✅ Tabla unificada vpos_audit verificada/creada.');
     } catch (error) {
-      console.error('[DB] ❌ Error al inicializar tabla pago_simple_audits:', error);
+      console.error('[DB] ❌ Error al inicializar tabla vpos_audit:', error);
     }
   }
 
@@ -76,7 +76,7 @@ export class PagoSimpleAudit {
     try {
       const [rows] = await dbPool.query(
         `SELECT shop_process_id
-           FROM pago_simple_audits
+           FROM vpos_audit
           WHERE bancard_process_id = ?
             AND action = 'single-buy'
           ORDER BY created_at DESC
@@ -102,7 +102,7 @@ export class PagoSimpleAudit {
     try {
       const [rows] = await dbPool.query(
         `SELECT invoice_number
-           FROM pago_simple_audits
+           FROM vpos_audit
           WHERE shop_process_id = ? AND invoice_number IS NOT NULL
           ORDER BY created_at DESC
           LIMIT 1`,
@@ -123,7 +123,7 @@ export class PagoSimpleAudit {
     try {
       const [rows] = await dbPool.query(
         `SELECT bancard_process_id
-           FROM pago_simple_audits
+           FROM vpos_audit
           WHERE shop_process_id = ?
             AND bancard_process_id IS NOT NULL
             AND action = 'single-buy'
@@ -160,7 +160,7 @@ export class PagoSimpleAudit {
     ipAddress?: string;
   }): Promise<void> {
     const query = `
-      INSERT INTO pago_simple_audits
+      INSERT INTO vpos_audit
         (action, external_id, servicio, canal, shop_process_id, amount, currency,
          description, bancard_process_id, status_result, invoice_number, request_payload, bancard_response,
          error_code, error_message, error_detail, bancard_messages, ip_address)

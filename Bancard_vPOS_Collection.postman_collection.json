@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "8a7b9c6d-5e4f-3a2b-1c0d-9e8f7a6b5c4d",
     "name": "Bancard vPOS Backend API",
-    "description": "Colección completa para interactuar y probar el backend vPOS de Bancard.\n\n### Auditoría en Base de Datos\nCada vez que llamas a `/api/pagosimple`, el sistema guarda un registro en la tabla `pago_simple_audits` en tu base de datos MySQL (con AWS RDS). \n\n**Queries útiles para probar la base de datos:**\n```sql\n-- Ver los últimos pagos registrados:\nSELECT * FROM pago_simple_audits ORDER BY id DESC LIMIT 10;\n\n-- Buscar pagos de un servicio específico:\nSELECT * FROM pago_simple_audits WHERE servicio = 'boletos/custodia';\n\n-- Buscar por el process ID:\nSELECT * FROM pago_simple_audits WHERE shop_process_id = '103';\n```",
+    "description": "Colección completa para interactuar y probar el backend vPOS de Bancard.\n\n### Auditoría en Base de Datos\nCada vez que llamas a `/api/pagosimple`, el sistema guarda un registro en la tabla `vpos_audit` en tu base de datos MySQL (con AWS RDS). \n\n**Queries útiles para probar la base de datos:**\n```sql\n-- Ver los últimos pagos registrados:\nSELECT * FROM vpos_audit ORDER BY id DESC LIMIT 10;\n\n-- Buscar pagos de un servicio específico:\nSELECT * FROM vpos_audit WHERE servicio = 'boletos/custodia';\n\n-- Buscar por el process ID:\nSELECT * FROM vpos_audit WHERE shop_process_id = '103';\n```",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [

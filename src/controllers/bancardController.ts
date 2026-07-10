@@ -1036,6 +1036,26 @@ export const preauthConfirmPure = async (req: Request, res: Response): Promise<v
   }
 };
 
+export const getShopProcessId = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { processId } = req.params;
+    if (!processId) {
+      res.status(400).json({ status: 'error', message: 'processId es requerido.' });
+      return;
+    }
+    const shopProcessId = await PagoSimpleAudit.lookupShopProcessId(processId);
+    if (!shopProcessId) {
+      res.status(404).json({ status: 'error', message: 'shopProcessId no encontrado para el processId proveido.' });
+      return;
+    }
+    res.status(200).json({ status: 'success', data: { shopProcessId } });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
+    console.error('[bancardController] getShopProcessId:', message);
+    res.status(500).json({ status: 'error', message: 'Error interno del servidor.', detail: message });
+  }
+};
+
 // ─── 6. GET /api/bancard/health ──────────────────────────────────────────
 
 export const healthCheck = (_req: Request, res: Response): void => {

@@ -22,6 +22,7 @@ import {
   chargePure,
   deleteCardPure,
   preauthConfirmPure,
+  getShopProcessId,
 } from '../controllers/bancardController.js';
 
 const router = Router();
@@ -874,5 +875,28 @@ router.get('/success', paymentSuccessHandler);
  *     tags: [Visualización]
  */
 router.get('/cancel', paymentCancelHandler);
+
+/**
+ * @swagger
+ * /api/bancard/shop-process-id/{processId}:
+ *   get:
+ *     summary: Obtener el shopProcessId interno a partir del processId de Bancard
+ *     tags: [Bancard Operations]
+ *     parameters:
+ *       - in: path
+ *         name: processId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: El processId devuelto por Bancard
+ *     responses:
+ *       200:
+ *         description: Se encontró el shopProcessId
+ *       400:
+ *         description: processId es requerido
+ *       404:
+ *         description: No se encontró un shopProcessId
+ */
+router.get('/shop-process-id/:processId', getShopProcessId);
 
 export default router;

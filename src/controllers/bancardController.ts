@@ -16,7 +16,7 @@ import type { ParamsDictionary } from 'express-serve-static-core';
 import { validationResult } from 'express-validator';
 import { BancardService, BancardApiError } from '../services/BancardService.js';
 import type { BancardWebhookPayload, BancardBilling } from '../types/bancard.types.js';
-import type { ApiErrorResponse, ApiSuccessResponse } from '../types/api.types.js';
+import type { ApiErrorResponse } from '../types/api.types.js';
 import type { PagoSimpleLooseDto, LegacyRollbackRequestDto, LegacyChargeBackRequestDto, SingleBuyDto } from '../dtos/requests/pagoSimple.request.dto.js';
 import type {
   ApiSuccessDto,
@@ -98,30 +98,19 @@ export const initiateSingleBuy = async (
       cancelUrl,
     });
 
-    const body: ApiSuccessResponse<typeof result> = {
-      status: 'success',
-      message: 'Compra iniciada exitosamente.',
-      data: result,
-    };
-    res.status(200).json(body);
+    res.status(200).json(result.rawResponse);
   } catch (error) {
     if (error instanceof BancardApiError) {
-      const body: ApiErrorResponse = {
-        status: 'error',
-        message: error.message,
-        bancardMessages: error.bancardMessages,
-      };
-      res.status(400).json(body);
+      res.status(400).json(error.rawResponse);
       return;
     }
     const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('[bancardController] initiateSingleBuy:', message);
-    const body: ApiErrorResponse = {
+    res.status(500).json({
       status: 'error',
       message: 'Error interno del servidor al comunicarse con Bancard.',
       ...(process.env.NODE_ENV !== 'production' && { detail: message }),
-    };
-    res.status(500).json(body);
+    });
   }
 };
 
@@ -769,26 +758,19 @@ export const rollback = async (
     const { shopProcessId } = req.body;
     const result = await bancardService.rollback(shopProcessId);
 
-    const body: any = {
-      status: result.status,
-      message: result.status === 'success' ? 'Rollback ejecutado correctamente.' : 'Error al ejecutar rollback.',
-      data: {
-        shopProcessId,
-        processed: result.status === 'success',
-        messages: result.messages,
-        rawResponse: result.rawResponse
-      },
-    };
-    res.status(200).json(body);
+    res.status(200).json(result.rawResponse);
   } catch (error) {
+    if (error instanceof BancardApiError) {
+      res.status(400).json(error.rawResponse);
+      return;
+    }
     const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('[bancardController] rollback:', message);
-    const body: ApiErrorResponse = {
+    res.status(500).json({
       status: 'error',
       message: 'Error al ejecutar el rollback.',
       ...(process.env.NODE_ENV !== 'production' && { detail: message }),
-    };
-    res.status(500).json(body);
+    });
   }
 };
 
@@ -804,43 +786,19 @@ export const getConfirmation = async (
     const { shopProcessId } = req.params;
     const result = await bancardService.getConfirmation(shopProcessId);
 
-    // Recuperar el invoice_number persistido por el Webhook (ya que GET de Bancard podría no incluirlo)
-    const savedInvoiceNumber = await PagoSimpleAudit.getInvoiceNumber(shopProcessId);
-
-    const mappedData = {
-      status: result.status,
-      confirmation: result.confirmation ? {
-        responseCode: result.confirmation.response_code,
-        responseDescription: result.confirmation.response_description,
-        ticketNumber: result.confirmation.ticket_number,
-        authorizationNumber: result.confirmation.authorization_number,
-        amount: result.confirmation.amount,
-        currency: result.confirmation.currency,
-        cardBrand: result.confirmation.card_brand,
-        cardMaskedNumber: result.confirmation.card_masked_number,
-        electronicBillNumber: result.confirmation.billing_response?.data?.invoice_number
-          || result.confirmation.vpos_electronic_bill?.invoice_number
-          || savedInvoiceNumber,
-        electronicBillCdc: result.confirmation.vpos_electronic_bill?.cdc,
-      } : null,
-      messages: result.messages,
-      rawResponse: result.rawResponse,
-    };
-
-    const body: ApiSuccessResponse<typeof mappedData> = {
-      status: 'success',
-      data: mappedData,
-    };
-    res.status(200).json(body);
+    res.status(200).json(result.rawResponse);
   } catch (error) {
+    if (error instanceof BancardApiError) {
+      res.status(400).json(error.rawResponse);
+      return;
+    }
     const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('[bancardController] getConfirmation:', message);
-    const body: ApiErrorResponse = {
+    res.status(500).json({
       status: 'error',
       message: 'Error al consultar la confirmación.',
       ...(process.env.NODE_ENV !== 'production' && { detail: message }),
-    };
-    res.status(500).json(body);
+    });
   }
 };
 
@@ -856,21 +814,19 @@ export const chargeBack = async (
     const { shopProcessId, amount, currency } = req.body;
     const result = await bancardService.chargeBack({ shopProcessId, amount, currency });
 
-    const body: ApiSuccessResponse<typeof result> = {
-      status: 'success',
-      message: 'Contracargo procesado.',
-      data: result,
-    };
-    res.status(200).json(body);
+    res.status(200).json(result.rawResponse);
   } catch (error) {
+    if (error instanceof BancardApiError) {
+      res.status(400).json(error.rawResponse);
+      return;
+    }
     const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('[bancardController] chargeBack:', message);
-    const body: ApiErrorResponse = {
+    res.status(500).json({
       status: 'error',
       message: 'Error al procesar el contracargo.',
       ...(process.env.NODE_ENV !== 'production' && { detail: message }),
-    };
-    res.status(500).json(body);
+    });
   }
 };
 
@@ -933,12 +889,12 @@ export const getClientInfoPure = async (req: Request, res: Response): Promise<vo
   try {
     const { clientRuc } = req.body;
     const result = await bancardService.getClientInfo({ clientRuc });
-    res.status(200).json({
-      status: 'success',
-      message: 'Datos de cliente obtenidos.',
-      data: result,
-    });
+    res.status(200).json(result.rawResponse);
   } catch (error) {
+    if (error instanceof BancardApiError) {
+      res.status(400).json(error.rawResponse);
+      return;
+    }
     const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('[bancardController] getClientInfoPure:', message);
     res.status(500).json({ status: 'error', message: 'Error al consultar cliente.', detail: message });
@@ -960,12 +916,12 @@ export const cancelBillingPure = async (req: Request, res: Response): Promise<vo
     }
 
     const result = await bancardService.cancelBilling({ shopProcessId });
-    res.status(200).json({
-      status: 'success',
-      message: 'Operación de cancelación procesada.',
-      data: result,
-    });
+    res.status(200).json(result.rawResponse);
   } catch (error) {
+    if (error instanceof BancardApiError) {
+      res.status(400).json(error.rawResponse);
+      return;
+    }
     const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('[bancardController] cancelBillingPure:', message);
     res.status(500).json({ status: 'error', message: 'Error al cancelar factura.', detail: message });
@@ -984,12 +940,12 @@ export const cardsNewPure = async (req: Request, res: Response): Promise<void> =
       returnUrl,
       cancelUrl
     });
-    res.status(200).json({
-      status: 'success',
-      message: 'Proceso de catastro iniciado.',
-      data: result,
-    });
+    res.status(200).json(result.rawResponse);
   } catch (error) {
+    if (error instanceof BancardApiError) {
+      res.status(400).json(error.rawResponse);
+      return;
+    }
     const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('[bancardController] cardsNewPure:', message);
     res.status(500).json({ status: 'error', message: 'Error al iniciar catastro de tarjeta.', detail: message });
@@ -1001,12 +957,12 @@ export const listCardsPure = async (req: Request, res: Response): Promise<void> 
   try {
     const { userId } = req.params; // from url params
     const result = await bancardService.listCards(Number(userId));
-    res.status(200).json({
-      status: 'success',
-      message: 'Tarjetas listadas.',
-      data: result,
-    });
+    res.status(200).json(result.rawResponse);
   } catch (error) {
+    if (error instanceof BancardApiError) {
+      res.status(400).json(error.rawResponse);
+      return;
+    }
     const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('[bancardController] listCardsPure:', message);
     res.status(500).json({ status: 'error', message: 'Error al listar tarjetas.', detail: message });
@@ -1027,12 +983,12 @@ export const chargePure = async (req: Request, res: Response): Promise<void> => 
       additionalData,
       numberOfPayments
     });
-    res.status(200).json({
-      status: 'success',
-      message: 'Pago con tarjeta guardada procesado.',
-      data: result,
-    });
+    res.status(200).json(result.rawResponse);
   } catch (error) {
+    if (error instanceof BancardApiError) {
+      res.status(400).json(error.rawResponse);
+      return;
+    }
     const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('[bancardController] chargePure:', message);
     res.status(500).json({ status: 'error', message: 'Error al procesar pago con alias.', detail: message });
@@ -1047,12 +1003,12 @@ export const deleteCardPure = async (req: Request, res: Response): Promise<void>
       userId: Number(userId),
       aliasToken
     });
-    res.status(200).json({
-      status: 'success',
-      message: 'Tarjeta eliminada.',
-      data: result,
-    });
+    res.status(200).json(result.rawResponse);
   } catch (error) {
+    if (error instanceof BancardApiError) {
+      res.status(400).json(error.rawResponse);
+      return;
+    }
     const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('[bancardController] deleteCardPure:', message);
     res.status(500).json({ status: 'error', message: 'Error al eliminar tarjeta.', detail: message });
@@ -1068,12 +1024,12 @@ export const preauthConfirmPure = async (req: Request, res: Response): Promise<v
       amount,
       billing
     });
-    res.status(200).json({
-      status: 'success',
-      message: 'Preautorización confirmada.',
-      data: result,
-    });
+    res.status(200).json(result.rawResponse);
   } catch (error) {
+    if (error instanceof BancardApiError) {
+      res.status(400).json(error.rawResponse);
+      return;
+    }
     const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('[bancardController] preauthConfirmPure:', message);
     res.status(500).json({ status: 'error', message: 'Error al confirmar preautorización.', detail: message });

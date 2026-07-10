@@ -348,7 +348,7 @@ export class BancardService {
 
     return {
       status: bancardResponse.status,
-      confirmation: (bancardResponse.confirmation as any) ?? null,
+      confirmation: (bancardResponse.operation as any) ?? null,
       messages: bancardResponse.messages ?? [],
       rawResponse: bancardResponse,
     };

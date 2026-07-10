@@ -209,19 +209,19 @@
                 const data = await res.json();
                 logOutput(data);
 
-                if (data.status === 'success' && data.data && data.data.processId) {
+                if (data.status === 'success' && data.process_id) {
                     // Cargar Iframe
                     const iframeContainer = document.getElementById('iframe-container');
                     iframeContainer.innerHTML = ''; // Clear
                     
                     // Set processId to cancel/preauth inputs for convenience
-                    document.getElementById('cancelProcessId').value = data.data.processId;
+                    document.getElementById('cancelProcessId').value = data.process_id;
                     if (document.getElementById('preauthProcessId')) {
-                        document.getElementById('preauthProcessId').value = data.data.processId;
+                        document.getElementById('preauthProcessId').value = data.process_id;
                     }
 
                     // Init Bancard SDK
-                    Bancard.Checkout.createForm('iframe-container', data.data.processId, {
+                    Bancard.Checkout.createForm('iframe-container', data.process_id, {
                         styles: {
                             "bg-color": "#ffffff",
                             "font-color": "#333333",

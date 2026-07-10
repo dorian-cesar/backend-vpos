@@ -695,7 +695,6 @@ export const pagoSimpleGateway = async (
       }
     }
 
-    // ─── Auditoría exitosa — incluye processId de Bancard si viene en result ─
     const typedResult = result as Record<string, unknown> | null;
     await PagoSimpleAudit.saveAuditLog({
       ...auditBase,
@@ -703,6 +702,10 @@ export const pagoSimpleGateway = async (
       statusResult: typedResult?.status as string | undefined ?? 'success',
       bancardResponse: result,
     });
+
+    if (responseBody && responseBody.data && typedResult?.rawResponse) {
+      (responseBody.data as any).bancardResponse = typedResult.rawResponse;
+    }
 
     console.log(`[bancardController] ◄ Respuesta enviada al frontend (action: ${action}):`);
     console.log(JSON.stringify(responseBody, null, 2));

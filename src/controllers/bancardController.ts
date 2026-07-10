@@ -703,15 +703,13 @@ export const pagoSimpleGateway = async (
       bancardResponse: result,
     });
 
-    if (responseBody && responseBody.data && typedResult?.rawResponse) {
-      (responseBody.data as any).bancardResponse = typedResult.rawResponse;
-    }
+    const finalResponse = typedResult?.rawResponse || responseBody;
 
     console.log(`[bancardController] ◄ Respuesta enviada al frontend (action: ${action}):`);
-    console.log(JSON.stringify(responseBody, null, 2));
+    console.log(JSON.stringify(finalResponse, null, 2));
     console.log('──────────────────────────────────────────────────────────────');
 
-    res.status(statusCode).json(responseBody);
+    res.status(statusCode).json(finalResponse);
 
   } catch (error) {
     // ─── Manejo centralizado de errores ──────────────────────────────────
@@ -720,7 +718,7 @@ export const pagoSimpleGateway = async (
 
     if (error instanceof BancardApiError) {
       bancardMessages = error.bancardMessages;
-      errorResponse = {
+      errorResponse = error.rawResponse || {
         status: 'error',
         action,
         message: error.message,

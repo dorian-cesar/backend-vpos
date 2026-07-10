@@ -91,6 +91,8 @@ export class BancardService {
       description,
       billing,
       additionalData,
+      preauthorization,
+      zimple,
       returnUrl,
       cancelUrl,
     } = paymentData;
@@ -102,6 +104,8 @@ export class BancardService {
       description,
       billing,
       additionalData,
+      preauthorization,
+      zimple,
       returnUrl,
       cancelUrl,
     });

@@ -178,3 +178,35 @@ Si el boleto no pudo emitirse o el usuario canceló el servicio, se debe anular 
   "status": "success"
 }
 ```
+
+---
+
+## 4. Consulta de Shop Process ID (Endpoint de Soporte)
+
+Dado que Bancard sólo devuelve el `process_id` al frontend durante la inicialización del `single-buy`, el frontend carece del identificador interno unificado (`shop_process_id`). Para facilitar que el frontend obtenga este dato para uso interno (ej. para sus propios registros o consultas), hemos expuesto un endpoint.
+
+- **Endpoint:** `GET /api/bancard/shop-process-id/:processId`
+- **Descripción:** Devuelve el `shop_process_id` interno a partir de un `process_id` previamente devuelto por Bancard.
+
+### Petición del Frontend (Path Parameter)
+```text
+GET /api/bancard/shop-process-id/*1peOb.UYgnW3KI.UQST
+```
+
+### Respuesta del Backend (Éxito - 200 OK)
+```json
+{
+  "status": "success",
+  "data": {
+    "shopProcessId": 169135188815673
+  }
+}
+```
+
+### Respuesta del Backend (Error - 404 Not Found)
+```json
+{
+  "status": "error",
+  "message": "shopProcessId no encontrado para el processId proveido."
+}
+```

@@ -899,4 +899,13 @@ router.get('/cancel', paymentCancelHandler);
  */
 router.get('/shop-process-id/:processId', getShopProcessId);
 
+/**
+ * @swagger
+ * /api/bancard/health:
+ *   get:
+ *     summary: Healthcheck de la API y ambiente Bancard actual
+ *     tags: [Visualización]
+ */
+router.get('/health', healthCheck);
+
 export default router;

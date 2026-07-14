@@ -42,8 +42,12 @@ interface BancardConfigInternal {
 
 const config: BancardConfigInternal = {
   // ─── Credenciales ─────────────────────────────────────────────────────────
-  publicKey: process.env.BANCARD_PUBLIC_KEY ?? '',
-  privateKey: process.env.BANCARD_PRIVATE_KEY ?? '',
+  publicKey: process.env.NODE_ENV === 'production' 
+    ? (process.env.BANCARD_PUBLIC_KEY_PRODUCTION ?? '') 
+    : (process.env.BANCARD_PUBLIC_KEY_STAGING ?? process.env.BANCARD_PUBLIC_KEY ?? ''),
+  privateKey: process.env.NODE_ENV === 'production' 
+    ? (process.env.BANCARD_PRIVATE_KEY_PRODUCTION ?? '') 
+    : (process.env.BANCARD_PRIVATE_KEY_STAGING ?? process.env.BANCARD_PRIVATE_KEY ?? ''),
 
   // ─── Entornos ─────────────────────────────────────────────────────────────
   environments: {

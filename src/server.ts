@@ -19,6 +19,8 @@ import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger.config.js';
 import { checkDbConnection } from './config/db.config.js';
 import { PagoSimpleAudit } from './models/PagoSimpleAudit.js';
+import { PosAudit } from './models/PosAudit.js';
+import { posFisicoRouter } from './routes/pos.routes.js';
 
 const app = express();
 const PORT = Number(process.env.PORT ?? 3000);
@@ -58,6 +60,7 @@ app.get('/', (_req, res) => {
 
 app.use('/api/bancard', bancardRoutes);
 app.use('/api', pagoSimpleRouter);
+app.use('/api', posFisicoRouter);
 
 // Ruta para la redirección después del iframe (Bancard returnUrl)
 app.get('/confirm_payment', paymentSuccessHandler);
@@ -112,6 +115,7 @@ app.listen(PORT, async () => {
   if (dbOk) {
     // Crea las tablas si no existen (idempotente, seguro de re-ejecutar)
     await PagoSimpleAudit.initTable();
+    await PosAudit.initTable();
   } else {
     console.warn('[DB] ⚠️  El servidor inicia SIN base de datos. Los logs de auditoría no se guardarán.');
   }

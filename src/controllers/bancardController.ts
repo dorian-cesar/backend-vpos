@@ -692,7 +692,9 @@ export const pagoSimpleGateway = async (
       bancardResponse: result,
     });
 
-    const finalResponse = typedResult?.rawResponse || responseBody;
+    // En el gateway unificado, siempre priorizamos el responseBody estandarizado. 
+    // Solo si no se definió responseBody, usamos el rawResponse.
+    const finalResponse = responseBody || typedResult?.rawResponse;
 
     console.log(`[bancardController] ◄ Respuesta enviada al frontend (action: ${action}):`);
     console.log(JSON.stringify(finalResponse, null, 2));

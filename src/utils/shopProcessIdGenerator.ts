@@ -71,9 +71,9 @@ function incrementOdometer() {
 export function generateShopProcessId(canal?: string): number {
   // 1. Determinar el prefijo según el canal (1 dígito)
   let prefix = '3'; // Por defecto para puntodeventa, custodia, etc.
-  if (canal === 'web') {
+  if (canal?.startsWith('web')) {
     prefix = '1';
-  } else if (canal === 'totem') {
+  } else if (canal?.startsWith('totem')) {
     prefix = '2';
   }
 

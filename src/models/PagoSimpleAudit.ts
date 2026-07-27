@@ -28,6 +28,7 @@ export class PagoSimpleAudit {
         error_detail    TEXT              DEFAULT NULL COMMENT 'Stack trace o detalle técnico (solo en dev)',
         bancard_messages JSON             DEFAULT NULL COMMENT 'Mensajes de error propios de Bancard',
         ip_address      VARCHAR(64)       DEFAULT NULL,
+        payment_method  VARCHAR(50)       DEFAULT NULL COMMENT 'Método de pago (Tarjeta, QR, etc.)',
         created_at      TIMESTAMP         DEFAULT CURRENT_TIMESTAMP,
         INDEX idx_shop_process_id (shop_process_id),
         INDEX idx_action (action),
@@ -48,9 +49,21 @@ export class PagoSimpleAudit {
         `);
         console.log('[DB] ➕ Columna invoice_number agregada a la tabla vpos_audit.');
       } catch (err: any) {
-        // Código 1060 es ER_DUP_FIELDNAME (columna ya existe). Ignoramos el error si ya existe.
         if (err.code !== 'ER_DUP_FIELDNAME') {
           console.warn('[DB] ⚠️ No se pudo asegurar la columna invoice_number (puede ignorarse si es error de sintaxis al ya existir):', err.message);
+        }
+      }
+
+      try {
+        await dbPool.query(`
+          ALTER TABLE vpos_audit 
+          ADD COLUMN payment_method VARCHAR(50) DEFAULT NULL COMMENT 'Método de pago (Tarjeta, QR, etc.)' 
+          AFTER ip_address;
+        `);
+        console.log('[DB] ➕ Columna payment_method agregada a la tabla vpos_audit.');
+      } catch (err: any) {
+        if (err.code !== 'ER_DUP_FIELDNAME') {
+          console.warn('[DB] ⚠️ No se pudo asegurar la columna payment_method (puede ignorarse si es error de sintaxis al ya existir):', err.message);
         }
       }
       
@@ -158,13 +171,14 @@ export class PagoSimpleAudit {
     errorDetail?: string;
     bancardMessages?: unknown;
     ipAddress?: string;
+    paymentMethod?: string;
   }): Promise<void> {
     const query = `
       INSERT INTO vpos_audit
         (action, external_id, servicio, canal, shop_process_id, amount, currency,
          description, bancard_process_id, status_result, invoice_number, request_payload, bancard_response,
-         error_code, error_message, error_detail, bancard_messages, ip_address)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         error_code, error_message, error_detail, bancard_messages, ip_address, payment_method)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     try {
@@ -187,6 +201,7 @@ export class PagoSimpleAudit {
         data.errorDetail ?? null,
         data.bancardMessages ? JSON.stringify(data.bancardMessages) : null,
         data.ipAddress ?? null,
+        data.paymentMethod ?? null,
       ]);
       console.log(`[PagoSimpleAudit] ✅ Auditoría guardada — action: ${data.action}, status: ${data.statusResult || 'success'}`);
     } catch (error) {

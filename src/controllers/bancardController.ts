@@ -846,7 +846,14 @@ export const confirmWebhook = async (req: Request<ParamsDictionary, unknown, Ban
     // Recuperar el bancard_process_id real para mantener la consistencia en el log de auditoría
     const realBancardProcessId = await PagoSimpleAudit.lookupBancardProcessId(confirmation.shopProcessId);
 
-    // Guardar la transacción en la auditoría incluyendo el invoice_number
+    // Determinar el método de pago analizando la huella de QR
+    const secInfo = req.body.operation?.security_information as any;
+    let paymentMethod = 'Tarjeta';
+    if (secInfo && secInfo.card_source === '' && secInfo.card_country === '') {
+      paymentMethod = 'QR / Billetera';
+    }
+
+    // Guardar la transacción en la auditoría incluyendo el invoice_number y payment_method
     await PagoSimpleAudit.saveAuditLog({
       action: 'webhook-confirmation',
       shopProcessId: confirmation.shopProcessId,
@@ -856,6 +863,7 @@ export const confirmWebhook = async (req: Request<ParamsDictionary, unknown, Ban
       statusResult: confirmation.status,
       invoiceNumber: confirmation.electronicBillNumber,
       bancardResponse: req.body,
+      paymentMethod,
     });
 
     console.log('[bancardController] Pago procesado (Webhook):', {
@@ -863,6 +871,7 @@ export const confirmWebhook = async (req: Request<ParamsDictionary, unknown, Ban
       status: confirmation.status,
       amount: confirmation.amount,
       invoiceNumber: confirmation.electronicBillNumber,
+      paymentMethod,
     });
 
     // Bancard requires strictly {"status": "success"} to acknowledge the webhook

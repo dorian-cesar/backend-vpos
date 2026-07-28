@@ -459,8 +459,28 @@ export const pagoSimpleGateway = async (
         console.log(`[bancardController] 🔍 Confirmation: processId=${processId} → shopProcessId=${confirmShopId}`);
         auditBase.shopProcessId = confirmShopId;
 
-        const confirmationResult = await bancardService.getConfirmation(confirmShopId);
-        result = confirmationResult;
+        // 1. Verificar si ya fue confirmado por webhook
+        const isAlreadyConfirmed = await PagoSimpleAudit.isConfirmed(confirmShopId);
+        
+        let finalStatus: 'success' | 'error' = 'error';
+        let finalConfirmationData: any = null;
+        let messages: any[] = [];
+        let rawResponseData: any = null;
+
+        if (isAlreadyConfirmed) {
+          console.log(`[bancardController] ✅ Transacción ${confirmShopId} ya confirmada en BD. Omitiendo llamada a Bancard para evitar 404.`);
+          finalStatus = 'success';
+          finalConfirmationData = {}; // Objeto mínimo, los detalles importantes son extraídos abajo
+        } else {
+          // 2. Si no está en BD (webhook retrasado), consultar a Bancard como fallback
+          console.log(`[bancardController] ⚠️ Transacción no confirmada en BD. Consultando a Bancard...`);
+          const confirmationResult = await bancardService.getConfirmation(confirmShopId);
+          result = confirmationResult;
+          finalStatus = confirmationResult.status as 'success' | 'error';
+          finalConfirmationData = confirmationResult.confirmation;
+          messages = confirmationResult.messages;
+          rawResponseData = confirmationResult.rawResponse;
+        }
 
         // Recuperar el invoice_number persistido por el Webhook (ya que GET de Bancard podría no incluirlo)
         const savedInvoiceNumber = await PagoSimpleAudit.getInvoiceNumber(confirmShopId);
@@ -472,24 +492,24 @@ export const pagoSimpleGateway = async (
           message: 'Confirmación obtenida correctamente.',
           data: {
             processId,
-            status: confirmationResult.status,
-            confirmation: confirmationResult.confirmation ? {
-              responseCode: confirmationResult.confirmation.response_code,
-              responseDescription: confirmationResult.confirmation.response_description,
-              ticketNumber: confirmationResult.confirmation.ticket_number,
-              authorizationNumber: confirmationResult.confirmation.authorization_number,
-              amount: confirmationResult.confirmation.amount,
-              currency: confirmationResult.confirmation.currency,
-              cardBrand: confirmationResult.confirmation.card_brand,
-              cardMaskedNumber: confirmationResult.confirmation.card_masked_number,
-              electronicBillNumber: confirmationResult.confirmation.billing_response?.data?.invoice_number
-                || confirmationResult.confirmation.vpos_electronic_bill?.invoice_number
+            status: finalStatus,
+            confirmation: (finalStatus === 'success' || finalConfirmationData) ? {
+              responseCode: finalConfirmationData?.response_code || '00',
+              responseDescription: finalConfirmationData?.response_description || 'Transaccion aprobada (desde BD)',
+              ticketNumber: finalConfirmationData?.ticket_number,
+              authorizationNumber: finalConfirmationData?.authorization_number,
+              amount: finalConfirmationData?.amount,
+              currency: finalConfirmationData?.currency,
+              cardBrand: finalConfirmationData?.card_brand,
+              cardMaskedNumber: finalConfirmationData?.card_masked_number,
+              electronicBillNumber: finalConfirmationData?.billing_response?.data?.invoice_number
+                || finalConfirmationData?.vpos_electronic_bill?.invoice_number
                 || savedInvoiceNumber,
-              electronicBillCdc: confirmationResult.confirmation.vpos_electronic_bill?.cdc
+              electronicBillCdc: finalConfirmationData?.vpos_electronic_bill?.cdc
                 || savedCdc,
             } : null,
-            messages: confirmationResult.messages,
-            rawResponse: confirmationResult.rawResponse,
+            messages: messages,
+            rawResponse: rawResponseData,
           },
         };
         break;

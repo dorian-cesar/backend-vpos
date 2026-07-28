@@ -165,6 +165,28 @@ export class PagoSimpleAudit {
   }
 
   /**
+   * Verifica si la transacción ya fue confirmada (status_result = 'approved' o 'success')
+   */
+  static async isConfirmed(shopProcessId: number | string): Promise<boolean> {
+    try {
+      const [rows] = await dbPool.query(
+        `SELECT status_result
+           FROM vpos_audit
+          WHERE shop_process_id = ?
+            AND (status_result = 'approved' OR status_result = 'success')
+            AND (action = 'webhook-confirmation' OR action = 'confirmation')
+          LIMIT 1`,
+        [String(shopProcessId)]
+      ) as [Array<{ status_result: string | null }>, unknown];
+
+      return rows.length > 0;
+    } catch (error) {
+      console.error('[PagoSimpleAudit] ❌ Error al verificar si está confirmado:', error);
+      return false;
+    }
+  }
+
+  /**
    * Recupera el bancard_process_id asociado a un shop_process_id desde el registro 'single-buy'
    */
   static async lookupBancardProcessId(shopProcessId: number | string): Promise<string | null> {

@@ -28,7 +28,6 @@ class CdcScrapingService {
   constructor() {
     this.jar = new CookieJar();
     const axiosInstance = axios.create({
-      jar: this.jar,
       withCredentials: true,
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
@@ -38,6 +37,7 @@ class CdcScrapingService {
       maxRedirects: 5,
     });
     this.client = wrapper(axiosInstance);
+    (this.client.defaults as any).jar = this.jar;
   }
 
   private async login(): Promise<boolean> {
@@ -223,7 +223,7 @@ class CdcScrapingService {
 
       let foundInvoice: CdcSearchResult | null = null;
 
-      $("#invoices-table tbody tr").each((_, row) => {
+      $("#invoices-table tbody tr").each((_: any, row: any) => {
         const linkElem = $(row).find('td a[href^="/invoices-portal/invoices/"]');
         const invoiceNumberText = linkElem.text().trim();
         const href = linkElem.attr("href");

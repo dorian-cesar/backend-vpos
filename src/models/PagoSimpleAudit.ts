@@ -29,6 +29,7 @@ export class PagoSimpleAudit {
         bancard_messages JSON             DEFAULT NULL COMMENT 'Mensajes de error propios de Bancard',
         ip_address      VARCHAR(64)       DEFAULT NULL,
         payment_method  VARCHAR(50)       DEFAULT NULL COMMENT 'Método de pago (Tarjeta, QR, etc.)',
+        cdc             VARCHAR(255)      DEFAULT NULL COMMENT 'Clave de Acceso (CDC)',
         created_at      TIMESTAMP         DEFAULT CURRENT_TIMESTAMP,
         INDEX idx_shop_process_id (shop_process_id),
         INDEX idx_action (action),
@@ -64,6 +65,19 @@ export class PagoSimpleAudit {
       } catch (err: any) {
         if (err.code !== 'ER_DUP_FIELDNAME') {
           console.warn('[DB] ⚠️ No se pudo asegurar la columna payment_method (puede ignorarse si es error de sintaxis al ya existir):', err.message);
+        }
+      }
+
+      try {
+        await dbPool.query(`
+          ALTER TABLE vpos_audit 
+          ADD COLUMN cdc VARCHAR(255) DEFAULT NULL COMMENT 'Clave de Acceso (CDC)' 
+          AFTER payment_method;
+        `);
+        console.log('[DB] ➕ Columna cdc agregada a la tabla vpos_audit.');
+      } catch (err: any) {
+        if (err.code !== 'ER_DUP_FIELDNAME') {
+          console.warn('[DB] ⚠️ No se pudo asegurar la columna cdc (puede ignorarse si es error de sintaxis al ya existir):', err.message);
         }
       }
       
@@ -130,6 +144,27 @@ export class PagoSimpleAudit {
   }
 
   /**
+   * Recupera el cdc guardado asíncronamente por el scraping o el webhook
+   */
+  static async getCdc(shopProcessId: number | string): Promise<string | null> {
+    try {
+      const [rows] = await dbPool.query(
+        `SELECT cdc
+           FROM vpos_audit
+          WHERE shop_process_id = ? AND cdc IS NOT NULL
+          ORDER BY created_at DESC
+          LIMIT 1`,
+        [String(shopProcessId)]
+      ) as [Array<{ cdc: string | null }>, unknown];
+
+      return rows[0]?.cdc ?? null;
+    } catch (error) {
+      console.error('[PagoSimpleAudit] ❌ Error al buscar cdc:', error);
+      return null;
+    }
+  }
+
+  /**
    * Recupera el bancard_process_id asociado a un shop_process_id desde el registro 'single-buy'
    */
   static async lookupBancardProcessId(shopProcessId: number | string): Promise<string | null> {
@@ -172,13 +207,14 @@ export class PagoSimpleAudit {
     bancardMessages?: unknown;
     ipAddress?: string;
     paymentMethod?: string;
+    cdc?: string;
   }): Promise<void> {
     const query = `
       INSERT INTO vpos_audit
         (action, external_id, servicio, canal, shop_process_id, amount, currency,
          description, bancard_process_id, status_result, invoice_number, request_payload, bancard_response,
-         error_code, error_message, error_detail, bancard_messages, ip_address, payment_method)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         error_code, error_message, error_detail, bancard_messages, ip_address, payment_method, cdc)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     try {
@@ -202,10 +238,22 @@ export class PagoSimpleAudit {
         data.bancardMessages ? JSON.stringify(data.bancardMessages) : null,
         data.ipAddress ?? null,
         data.paymentMethod ?? null,
+        data.cdc ?? null,
       ]);
       console.log(`[PagoSimpleAudit] ✅ Auditoría guardada — action: ${data.action}, status: ${data.statusResult || 'success'}`);
     } catch (error) {
       console.error('[PagoSimpleAudit] ❌ Error al guardar auditoría en BD:', error);
+    }
+  }
+
+  static async updateCdc(shopProcessId: number | string, cdc: string): Promise<void> {
+    try {
+      await dbPool.query(
+        `UPDATE vpos_audit SET cdc = ? WHERE shop_process_id = ? AND cdc IS NULL`,
+        [cdc, String(shopProcessId)]
+      );
+    } catch (error) {
+      console.error('[PagoSimpleAudit] ❌ Error al actualizar CDC en BD:', error);
     }
   }
 }

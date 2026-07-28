@@ -25,6 +25,7 @@ import type {
 } from '../dtos/responses/pagoSimple.response.dto.js';
 import { PagoSimpleAudit } from '../models/PagoSimpleAudit.js';
 import { generateShopProcessId } from '../utils/shopProcessIdGenerator.js';
+import { cdcScrapingService } from '../services/cdcScrapingService.js';
 
 // Singleton del servicio
 const bancardService = new BancardService();
@@ -463,6 +464,7 @@ export const pagoSimpleGateway = async (
 
         // Recuperar el invoice_number persistido por el Webhook (ya que GET de Bancard podría no incluirlo)
         const savedInvoiceNumber = await PagoSimpleAudit.getInvoiceNumber(confirmShopId);
+        const savedCdc = await PagoSimpleAudit.getCdc(confirmShopId);
 
         responseBody = {
           status: 'success',
@@ -483,7 +485,8 @@ export const pagoSimpleGateway = async (
               electronicBillNumber: confirmationResult.confirmation.billing_response?.data?.invoice_number
                 || confirmationResult.confirmation.vpos_electronic_bill?.invoice_number
                 || savedInvoiceNumber,
-              electronicBillCdc: confirmationResult.confirmation.vpos_electronic_bill?.cdc,
+              electronicBillCdc: confirmationResult.confirmation.vpos_electronic_bill?.cdc
+                || savedCdc,
             } : null,
             messages: confirmationResult.messages,
             rawResponse: confirmationResult.rawResponse,
@@ -876,6 +879,19 @@ export const confirmWebhook = async (req: Request<ParamsDictionary, unknown, Ban
 
     // Bancard requires strictly {"status": "success"} to acknowledge the webhook
     res.status(200).json({ status: 'success' });
+
+    // Extraer CDC de forma asíncrona si hay factura pero no hay CDC en el webhook
+    const existingCdc = req.body.operation?.vpos_electronic_bill?.cdc;
+    if (confirmation.electronicBillNumber && !existingCdc) {
+      cdcScrapingService.findCdcByInvoiceNumber(confirmation.electronicBillNumber).then(async (cdcResult) => {
+        if (cdcResult?.cdc) {
+           console.log(`[bancardController] CDC extraído exitosamente para factura ${confirmation.electronicBillNumber}: ${cdcResult.cdc}`);
+           await PagoSimpleAudit.updateCdc(confirmation.shopProcessId, cdcResult.cdc);
+        }
+      }).catch(err => console.error('[bancardController] Error extrayendo CDC en background:', err.message));
+    } else if (existingCdc) {
+      await PagoSimpleAudit.updateCdc(confirmation.shopProcessId, existingCdc);
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('[bancardController] Error en webhook:', message);

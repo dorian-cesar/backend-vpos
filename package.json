@@ -22,6 +22,8 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^1.7.2",
+    "axios-cookiejar-support": "^7.0.0",
+    "cheerio": "^1.2.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
@@ -30,7 +32,8 @@
     "morgan": "^1.10.0",
     "mysql2": "^3.22.4",
     "swagger-jsdoc": "^6.3.0",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "tough-cookie": "^6.0.2"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
@@ -40,6 +43,7 @@
     "@types/node": "^20.14.2",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
+    "@types/tough-cookie": "^4.0.5",
     "rimraf": "^5.0.7",
     "ts-node-dev": "^2.0.0",
     "tsx": "^4.22.4",

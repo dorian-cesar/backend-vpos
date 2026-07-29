@@ -15,6 +15,7 @@ import type { Request, Response } from 'express';
 import type { ParamsDictionary } from 'express-serve-static-core';
 import { validationResult } from 'express-validator';
 import { BancardService, BancardApiError } from '../services/BancardService.js';
+import bancardConfig from '../config/bancard.config.js';
 import type { BancardWebhookPayload, BancardBilling } from '../types/bancard.types.js';
 import type { ApiErrorResponse } from '../types/api.types.js';
 import type { PagoSimpleLooseDto, LegacyRollbackRequestDto, LegacyChargeBackRequestDto, SingleBuyDto } from '../dtos/requests/pagoSimple.request.dto.js';
@@ -507,6 +508,7 @@ export const pagoSimpleGateway = async (
                 || savedInvoiceNumber,
               electronicBillCdc: finalConfirmationData?.vpos_electronic_bill?.cdc
                 || savedCdc,
+              commerceStamp: bancardConfig.commerce.stamp,
             } : null,
             messages: messages,
             rawResponse: rawResponseData,

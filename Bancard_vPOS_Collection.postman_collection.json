@@ -90,7 +90,7 @@
                 "pagosimple"
               ]
             },
-            "description": "Consulta el estado final del pago (aprobado/rechazado) utilizando el Gateway de Pago Simple. Registra la auditoría en la base de datos."
+            "description": "Consulta el estado final del pago (aprobado/rechazado) utilizando el Gateway de Pago Simple. Registra la auditoría en la base de datos.\\n\\n**Nota sobre el CDC (Factura Electrónica):**\\nSi el pago fue aprobado y Bancard envió el Webhook, el backend hará web scraping automáticamente para obtener el CDC. La respuesta incluirá `electronicBillNumber` y `electronicBillCdc` dentro del objeto `confirmation`."
           },
           "response": []
         },

@@ -7,6 +7,13 @@ export const initPosFisico = async (req: Request<{}, {}, PosFisicoInitRequest>, 
   try {
     const { amount } = req.body;
     
+    const now = new Date();
+    const timestamp = now.toLocaleString('es-PY', { timeZone: 'America/Asuncion' });
+    console.log('──────────────────────────────────────────────────────────────');
+    console.log(`[${timestamp}] [posController] ► Petición entrante (action: initPosFisico) | Origen: POS-FISICO`);
+    console.log('[posController] Payload:', JSON.stringify(req.body, null, 2));
+    console.log('──────────────────────────────────────────────────────────────');
+
     if (!amount || amount <= 0) {
       return res.status(400).json({ status: 'error', message: 'Monto inválido.' });
     }
@@ -48,6 +55,13 @@ export const initPosFisico = async (req: Request<{}, {}, PosFisicoInitRequest>, 
 export const confirmPosFisico = async (req: Request<{}, {}, PosFisicoConfirmRequest>, res: Response) => {
   try {
     const { facturaNro, status_result, pos_response, error_message } = req.body;
+    
+    const now = new Date();
+    const timestamp = now.toLocaleString('es-PY', { timeZone: 'America/Asuncion' });
+    console.log('──────────────────────────────────────────────────────────────');
+    console.log(`[${timestamp}] [posController] ► Petición entrante (action: confirmPosFisico) | Origen: POS-FISICO`);
+    console.log('[posController] Payload:', JSON.stringify(req.body, null, 2));
+    console.log('──────────────────────────────────────────────────────────────');
 
     if (!facturaNro || !status_result) {
       return res.status(400).json({ status: 'error', message: 'Faltan parámetros requeridos (facturaNro, status_result).' });

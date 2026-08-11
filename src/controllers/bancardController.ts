@@ -149,8 +149,11 @@ export const pagoSimpleGateway = async (
   const canalStr = String(canal || '').toLowerCase();
   const origenTipo = (canalStr.includes('totem') || canalStr.includes('pos') || canalStr.includes('puntodeventa')) ? 'POS / TÓTEM' : 'WEB';
 
+  const now = new Date();
+  const timestamp = now.toLocaleString('es-PY', { timeZone: 'America/Asuncion' });
+
   console.log('──────────────────────────────────────────────────────────────');
-  console.log(`[bancardController] ► Petición entrante (action: ${action}) | Origen: 💳 ${origenTipo} (canal: "${canal || 'sin especificar'}")`);
+  console.log(`[${timestamp}] [bancardController] ► Petición entrante (action: ${action}) | Origen: 💳 ${origenTipo} (canal: "${canal || 'sin especificar'}")`);
   console.log('[bancardController] Payload:', JSON.stringify(req.body, null, 2));
   console.log('──────────────────────────────────────────────────────────────');
 
